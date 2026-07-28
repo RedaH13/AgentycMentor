@@ -1,0 +1,80 @@
+### OCR Engine: TESSERACT
+Global Confidence: 64.0%
+
+Nejonde Romie fein, Tore Admaio Gmcho Auioueti , David Mameno Bice, AcbsioTine Sagat Subs
+
+RESOLVER EL SIGUIENTE PROBLEMA USANDO LA HERRAMIENTA CHAABI
+Tenemos una Seccién DOBLE T (la Figura no esta a escala) con los siguientes datos: una
+altura total h = 56 cm; base b, = 46 cm (el ala superior) y b, = 45 cm (el ala inferior);
+espesores: e, = 3 cm (superior), e, = 8 cm (inferior) y e, = 8 cm (alma).
+
+Se pide calcular:
+
+1) El perfmetro total de la secci6n. cm
+2) El drea total de la seccién: cm?
+3) La distancia del Centro de Gravedad:
+
+a) del conjunto al eje horizontal: mm
+
+b) del conjunto al eje vertical: mm
+4) El Momento de Inercia de la seccién alrededor del eje horizontal: cm*
+5) El Momento de Inercia alrededor del eje vertical: cm*
+6) Espesor min. del alma (e,) necesario para que el momento de inercia alrededor del
+eje vertical sea mayor 0 igual a 108.000 cm* (en mm sin decimales): mm
+
+| by 1) yerzsa (6-4) 42-63-34
+
+Te, Ben +4512-31(05-) = 278 en
+
+2) Agr 6-3 5 138en*
+
+fa) Ko 2(S6-3-8)-B 2 360em™
+
+C , A, 25-82 360em2
+Apn SSS ew?
+
+_t e: Sen 3) ¥,2-Z:a5000 y+ lor entrar da graveded Fe
+
+‘ | 4 uf | cneeuftan olinender en
+{Sem b) Y= 28 Phys Ay 4+ Ards +A, 5u5 _
+
+awe none Wrenenronanon | AytAr +
+
+Output Results Yee 232m A =2324tmn
+
+Nov hebiaros do & mcbdo
+4 ettendionos gee une xe Bes rs heat aera aa Chern
+3 bias
+_—
+
+To see the full values, Please scroll upto the
+extreme right in the textbox.
+
+Area of section (unitA2):
+Position of centraid - Xe (unit): [23
+Position of centroid - Ye {unit): [ 23.241]
+
+Moment of Inertia Ixx (unit*4):| 349864
+
+v) bacamod iS poh! bien
+
+4G) T s23-zAk arene: 864'06 on
+¥
+beta af
+
+corre
+
+Ke, 5) Ayez3i spe cde wile gp grt te ese oo 0
+Moment of Inertia lyy (unit*4):| 87004 bX ) Ly rf!
+
+sek ne LA
+Polar Moment of Inertia Izz (unit*4):| 43686 ‘ ae a
+~T a} ‘68 ”
+Elastic Section Modulus Sxx (unit*3):| 10680. i g log oves ss x peyeteat
+
+Ps
+Elastic Section Modulus Syy (unit*3):| 3782.7: + Dh, . t
+Radius of gyration nx (unit): 20.193: benee oe 2 one zP
+Radius of gyration ryy {unit):| 10.069: noe g > va brentecitaD
+Resneclo «P vettica?
+la habe ed Pa vertical
