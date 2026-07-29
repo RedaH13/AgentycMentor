@@ -1,5 +1,5 @@
 import mimetypes
-from core.engine import process_pdf, process_image
+from ocr_service.core.engine import process_pdf, process_image
 
 def dispatch(filename: str, file_bytes: bytes, ocr_engine: str = "auto") -> dict:
     # Routes the uploaded file to the correct processing pipeline

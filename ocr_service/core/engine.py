@@ -9,11 +9,11 @@ from PIL import Image
 from google import genai
 from google.genai import types
 import json
-from core.preprocessor import preprocess_image
-from core.postprocessor import clean_text
-from config.settings import settings
-from core.preprocessor import compress_image_bytes
-from models.schemas import OCRDatabaseRecord, PageBlock, LineBlock, WordBlock, BoundingBox
+from ocr_service.core.preprocessor import preprocess_image
+from ocr_service.core.postprocessor import clean_text
+from ocr_service.config.settings import settings
+from ocr_service.core.preprocessor import compress_image_bytes
+from ocr_service.models.schemas import OCRDatabaseRecord, PageBlock, LineBlock, WordBlock, BoundingBox
 
 def process_pdf(file_bytes: bytes, filename: str = "unknown"):
     # Extracts text from digital PDFs (professor rubrics).

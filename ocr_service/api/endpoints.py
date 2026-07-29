@@ -1,20 +1,28 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from core.dispatcher import dispatch
-from models.schemas import OCRResponse
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from ocr_service.core.dispatcher import dispatch
+import traceback
 
-app = FastAPI(title="OCR Service")
+router = APIRouter()
 
-@app.post("/api/v1/extract", response_model=OCRResponse)
-async def extract_text(
+@router.post("/extract")
+async def extract_document(
     file: UploadFile = File(...),
-    ocr_engine: str = Form(default="auto", description="Options: auto, tesseract, gemini, ocrspace")
+    engine: str = Form("auto", description="Options: auto, tesseract, gemini, ocrspace")
 ):
-    # 1. Read the file into memory asynchronously
-    file_bytes = await file.read()
-    
+    """
+    Receives an academic document (Image or PDF) and returns a structured JSON payload.
+    """
     try:
-        # 2. Pass filename, bytes, and the chosen engine to the dispatcher
-        result = dispatch(file.filename, file_bytes, ocr_engine)
-        return OCRResponse(**result)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        file_bytes = await file.read()
+        
+        # Run the file through our unified pipeline
+        result = dispatch(file.filename, file_bytes, engine)
+        
+        if "error" in result and result["error"]:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+        return result
+        
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Extraction pipeline failed: {str(e)}")

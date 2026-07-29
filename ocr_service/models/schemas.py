@@ -21,12 +21,12 @@ class LineBlock(BaseModel):
     box: Optional[BoundingBox] = None
 
 class PageBlock(BaseModel):
-    """Handles multi-page PDFs or single images."""
+    """Handles multi-page PDFs or single images"""
     page_number: int = 1
     lines: List[LineBlock] = Field(default_factory=list)
 
 class OCRDatabaseRecord(BaseModel):
-    """The root payload to be saved to your database."""
+    """The root payload to be saved to db"""
     # Metadata
     file_name: str = Field(default="unknown")
     is_image: bool = Field(default=False)
