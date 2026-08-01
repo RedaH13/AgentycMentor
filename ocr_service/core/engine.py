@@ -60,7 +60,7 @@ def parse_ocrspace_to_schema(raw_json: dict) -> list:
                         height=w_data.get("Height", 0)
                     )
                 ))
-            # OCR.Space provides MinTop and MaxHeight, we need to calculate min_x and max_x from the words.
+            # OCR.Space provides MinTop and MaxHeight, calculate min_x and max_x from the words.
             min_y = line_data.get("MinTop", 0)
             max_h = line_data.get("MaxHeight", 0)
             min_x = min([w.box.x for w in words]) if words else 0
@@ -132,7 +132,7 @@ def process_image(file_bytes: bytes, filename: str = "unknown", ocr_engine: str 
             raw_text = pytesseract.image_to_string(processed)
             
             if ocr_engine == "auto" and confidence < 50:
-                fallback_provider = "ocrspace" # Defaulting to OCR.Space for the spatial JSON
+                fallback_provider = "ocrspace" # Defaulting for the spatial JSON
                 safe_bytes = compress_image_bytes(file_bytes, max_size_mb=1.9)
                 result_record = call_cloud_ocr(safe_bytes, filename, provider=fallback_provider)
                 return result_record.model_dump()
@@ -205,7 +205,7 @@ def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace")
         pages = []
         full_text_parts = []
         
-        # 3. Parse Gemini's JSON and map it to our DB Schema
+        # 3. Parse Gemini's JSON and map it to DB Schema
         try:
             gemini_data = json.loads(response.text)
             page = PageBlock(lines=[])
@@ -240,7 +240,7 @@ def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace")
             full_text = "\n".join(full_text_parts)
             
         except (json.JSONDecodeError, TypeError, ValueError):
-            # Safe fallback just in case the JSON parsing fails
+            # Safe fallback
             full_text = response.text
             pages = []
 

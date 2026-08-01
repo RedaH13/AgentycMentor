@@ -8,7 +8,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Include your endpoint routes
 app.include_router(ocr_router, prefix="/api/v1/ocr", tags=["Extraction"])
 
 @app.get("/")
