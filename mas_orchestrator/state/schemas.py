@@ -3,6 +3,7 @@ from typing import TypedDict, Dict, Any, Optional
 class MASState(TypedDict):
     """Global state shared across all LangGraph nodes."""
     session_id: str
+    student_id: Optional[int]
     user_role: str  # 'student' or 'professor'
     file_path: Optional[str]
     

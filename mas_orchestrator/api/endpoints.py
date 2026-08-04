@@ -14,10 +14,8 @@ class CorrectionPayload(BaseModel):
     corrected_text: str
 
 @router.post("/process/start")
-async def start_processing(file: UploadFile = File(...)):
-    """
-    Upload the file, run OCR, and pause for human verification.
-    """
+async def start_processing(student_id: int = Form(...), file: UploadFile = File(...)):
+    """Upload the file, run OCR, and pause for human verification"""
     try:
         # Save file locally for the node to access
         file_path = os.path.join(UPLOAD_DIR, file.filename)
@@ -31,10 +29,10 @@ async def start_processing(file: UploadFile = File(...)):
         # Initialize the state
         initial_state = {
             "session_id": thread_id,
+            "student_id": student_id,
             "user_role": "student",
             "file_path": file_path
         }
-
         # Run the graph. execute OCR and PAUSE before 'human_verify'
         mas_router.invoke(initial_state, config=config)
         # Fetch the current state at the breakpoint
@@ -47,6 +45,7 @@ async def start_processing(file: UploadFile = File(...)):
         return {
             "message": "OCR complete. Awaiting human verification.",
             "thread_id": thread_id,
+            "student_id": student_id,
             "raw_text": raw_text
         }
     except Exception as e:
@@ -78,7 +77,8 @@ async def resume_processing(thread_id: str, payload: CorrectionPayload = Body(..
         return {
             "message": "Processing complete.",
             "thread_id": thread_id,
-            "diagnostic_data": final_state.get("diagnostic_data")
+            "diagnostic_data": final_state.get("diagnostic_data"),
+            "guidance_data": final_state.get("guidance_data")
         }
 
     except Exception as e:
