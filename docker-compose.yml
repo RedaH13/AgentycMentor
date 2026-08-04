@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333" # REST API & Web UI
+      - "6334:6334" # gRPC (faster, used by Python client)
+    volumes:
+      - ./data/qdrant_storage:/qdrant/storage
+    # Limits resources to prevent it from eating machine's memory
+    deploy:
+      resources:
+        limits:
+          memory: 512M
