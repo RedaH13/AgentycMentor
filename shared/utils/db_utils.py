@@ -44,3 +44,23 @@ def save_new_difficulties(session_id: str, difficulties: list[str]):
             conn.commit()
     except Exception as e:
         print(f"DB Write Error: {e}")
+
+
+def ensure_submission_exists(session_id: str, student_id: int, subject: str, document_type: str = "Assignment"):
+    """
+    Ensures a submission record exists in the Submissions table
+    """
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            query = """
+                IF NOT EXISTS (SELECT 1 FROM Submissions WHERE SessionID = ?)
+                BEGIN
+                    INSERT INTO Submissions (SessionID, StudentID, Subject, DocumentType)
+                    VALUES (?, ?, ?, ?)
+                END
+            """
+            cursor.execute(query, (session_id, session_id, student_id, subject, document_type))
+            conn.commit()
+    except Exception as e:
+        print(f"DB Ensure Submission Error: {e}")

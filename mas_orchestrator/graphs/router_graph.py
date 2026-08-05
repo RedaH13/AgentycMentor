@@ -5,6 +5,8 @@ from mas_orchestrator.state.schemas import MASState
 from mas_orchestrator.nodes.ocr_node import run_ocr_node
 from mas_orchestrator.nodes.human_verify_node import run_human_verify_node
 from mas_orchestrator.nodes.diagnostic_node import run_diagnostic_node
+from mas_orchestrator.nodes.guidance_generation_node import run_guidance_node
+from mas_orchestrator.nodes.rag_retrieve_node import run_rag_retrieve_node
 
 def route_after_diagnostic(state: MASState) -> str:
     """
@@ -22,12 +24,17 @@ def route_after_diagnostic(state: MASState) -> str:
 # Initialize the graph with schema
 memory = MemorySaver()
 
+def human_verify_node(state: MASState):
+    return state
+
 workflow = StateGraph(MASState)
 
 # Add nodes
 workflow.add_node("ocr", run_ocr_node)
 workflow.add_node("human_verify", run_human_verify_node)
 workflow.add_node("diagnostic", run_diagnostic_node)
+workflow.add_node("rag_retrieve", run_rag_retrieve_node)
+workflow.add_node("guidance", run_guidance_node)
 
 # Define the flow
 workflow.set_entry_point("ocr")
@@ -41,6 +48,10 @@ workflow.add_conditional_edges(
         END: END
     }
 )
+workflow.add_edge("diagnostic","rag_retrieve")
+workflow.add_edge("rag_retrieve","guidance")
+workflow.add_edge("guidance",END)
+
 
 # Compile
 mas_router = workflow.compile(

@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage
 from mas_orchestrator.state.schemas import MASState
 from llm_clients.gemini_client import get_gemini_client
 from llm_clients.prompts.guidance_prompts import GUIDANCE_SYSTEM_PROMPT
-from shared.utils.db_utils import fetch_active_difficulties, save_new_difficulties
+from shared.utils.db_utils import fetch_active_difficulties, save_new_difficulties, ensure_submission_exists
 
 # structure for the Student Dashboard
 class GuidanceOutput(BaseModel):
@@ -20,9 +20,12 @@ def run_guidance_node(state: MASState) -> dict:
     text_to_analyze = state.get("final_confirmed_text")
     diagnostic_data = state.get("diagnostic_data", {})
     subject = diagnostic_data.get("subject", "Unknown")
+    document_type = diagnostic_data.get("document_type", "Assignment")
 
     student_id = state.get("student_id") # (passed in via API endpoint)
     session_id = state.get("session_id")
+
+    retrieved_context = state.get("retrieved_context", "No course materials retrieved.")
     
     if not text_to_analyze or not student_id:
         return {"error": "Guidance Agent failed: Missing text or student ID."}
@@ -37,6 +40,7 @@ def run_guidance_node(state: MASState) -> dict:
         formatted_prompt = GUIDANCE_SYSTEM_PROMPT.format(
             subject=subject,
             historical_difficulties=history_text,
+            retrieved_context=retrieved_context,
             student_text=text_to_analyze
         )
         
@@ -45,7 +49,9 @@ def run_guidance_node(state: MASState) -> dict:
         
         # Save new difficulties to sql server
         new_difficulties = guidance_data.get("identified_difficulties", [])
-        save_new_difficulties(session_id, new_difficulties)        
+        if session_id:
+            ensure_submission_exists(session_id=session_id, student_id=student_id, subject=subject, document_type=document_type)
+            save_new_difficulties(session_id, new_difficulties)      
         return {
             "guidance_data": guidance_data,
             "error": None
