@@ -12,6 +12,7 @@ class MASState(TypedDict):
     final_confirmed_text: Optional[str]
     diagnostic_data: Optional[Dict[str, Any]]
     guidance_data: Optional[Dict[str, Any]]
+    correction_data: Optional[Dict[str, Any]]
 
     retrieved_context: Optional[str]
 
