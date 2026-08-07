@@ -3,7 +3,12 @@ import os
 
 def get_db_connection():
     """Establishes a connection to SQL Server."""
-    conn_str = os.getenv("SQL_SERVER_CONN_STR", "Driver={ODBC Driver 17 for SQL Server};Server=YOUR_SERVER;Database=YOUR_DB;UID=user;PWD=password;")
+    conn_str = os.getenv(
+        "SQL_SERVER_CONN_STR", 
+        "Driver={ODBC Driver 17 for SQL Server};"
+        "Server=DESKTOP-CK7HVDE;"
+        "Database=MAS_Pedagogic;"
+        "Trusted_Connection=yes;")
     return pyodbc.connect(conn_str)
 
 def fetch_active_difficulties(student_id: int, subject: str) -> str:

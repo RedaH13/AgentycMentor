@@ -20,7 +20,8 @@ def route_after_diagnostic(state: MASState) -> str:
     is_readable = diagnostic_data.get("is_readable", True)
     if not is_readable:
         return "human_verify"
-    return END
+    return "rag_retrieve"
+
 
 # Initialize the graph with schema
 memory = MemorySaver()

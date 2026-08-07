@@ -3,11 +3,10 @@ from qdrant_client.http.models import Distance, VectorParams
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import os
 
-# 1. Initialize the embedding model (Gemini)
-# Ensure your GOOGLE_API_KEY is in your environment variables
-embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+# Initialize the embedding model (Gemini)
+embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 
-# 2. Connect to the local Docker Qdrant instance
+# Connect to the local Docker Qdrant instance
 client = QdrantClient(url="http://localhost:6333")
 
 COLLECTION_NAME = "course_materials"

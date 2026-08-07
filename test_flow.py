@@ -19,7 +19,7 @@ def run_visualization():
         "session_id": thread_id,
         "student_id": 999, 
         "user_role": "student",
-        "file_path": "test_upload.pdf" 
+        "file_path": "test/IMG_0635.jpeg" 
     }
 
     print("\n🚀 STARTING LANGGRAPH EXECUTION: PART 1 (Pre-Verification)")
