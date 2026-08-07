@@ -1,6 +1,9 @@
 from pydantic import BaseModel, Field
 from typing import List
 from langchain_core.messages import HumanMessage
+from dotenv import load_dotenv
+load_dotenv()
+
 
 from mas_orchestrator.state.schemas import MASState
 from llm_clients.gemini_client import get_gemini_client

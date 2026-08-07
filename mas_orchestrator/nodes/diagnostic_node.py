@@ -4,6 +4,9 @@ from langchain_core.messages import HumanMessage
 from mas_orchestrator.state.schemas import MASState
 from llm_clients.gemini_client import get_gemini_client
 from llm_clients.prompts.diagnostic_prompts import DIAGNOSTIC_SYSTEM_PROMPT
+from dotenv import load_dotenv
+load_dotenv()
+
 
 # schema the agent MUST return
 class DiagnosticOutput(BaseModel):

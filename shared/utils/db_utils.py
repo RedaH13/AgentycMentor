@@ -64,3 +64,42 @@ def ensure_submission_exists(session_id: str, student_id: int, subject: str, doc
             conn.commit()
     except Exception as e:
         print(f"DB Ensure Submission Error: {e}")
+
+
+def save_correction_results(session_id: str, correction_data: dict):
+    """Writes the overall grade and C2PCT phase breakdown to SQL Server."""
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            # Prepare data for CorrectionResults
+            total_score = correction_data.get("total_score", 0)
+            passed = 1 if total_score >= 8 else 0 
+            
+            critical_errors_list = correction_data.get("critical_errors", [])
+            # Convert the list of errors into a single string for SQL storage
+            critical_errors_str = "\n".join([f"- {err}" for err in critical_errors_list]) if critical_errors_list else None
+
+            # Insert into CorrectionResults
+            query_main = """
+                INSERT INTO CorrectionResults (SessionID, TotalScore, Passed, CriticalErrors)
+                VALUES (?, ?, ?, ?);
+            """
+            cursor.execute(query_main, (session_id, total_score, passed, critical_errors_str))
+
+            # Insert individual Phase Evaluations (Phases 1-5)
+            academic_evaluations = correction_data.get("academic_evaluations", [])
+            if academic_evaluations:
+                query_phases = """
+                    INSERT INTO PhaseEvaluations (SessionID, PhaseName, Score, Justification)
+                    VALUES (?, ?, ?, ?);
+                """
+                for phase in academic_evaluations:
+                    cursor.execute(query_phases, (
+                        session_id,
+                        phase.get("phase_name"),
+                        phase.get("score"),
+                        phase.get("justification")
+                    ))
+            conn.commit()            
+    except Exception as e:
+        print(f"DB Write Error (Correction Results): {e}")
