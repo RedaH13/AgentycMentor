@@ -8,6 +8,7 @@ from mas_orchestrator.nodes.diagnostic_node import run_diagnostic_node
 from mas_orchestrator.nodes.guidance_generation_node import run_guidance_node
 from mas_orchestrator.nodes.rag_retrieve_node import run_rag_retrieve_node
 from mas_orchestrator.nodes.correction_node import run_correction_node
+from mas_orchestrator.nodes.feedback_node import run_feedback_node
 
 def route_after_diagnostic(state: MASState) -> str:
     """
@@ -38,6 +39,7 @@ workflow.add_node("diagnostic", run_diagnostic_node)
 workflow.add_node("rag_retrieve", run_rag_retrieve_node)
 workflow.add_node("guidance", run_guidance_node)
 workflow.add_node("correction", run_correction_node)
+workflow.add_node("feedback", run_feedback_node)
 
 # Define the flow
 workflow.set_entry_point("ocr")
@@ -54,7 +56,8 @@ workflow.add_conditional_edges(
 workflow.add_edge("diagnostic","rag_retrieve")
 workflow.add_edge("rag_retrieve","guidance")
 workflow.add_edge("guidance","correction")
-workflow.add_edge("correction",END)
+workflow.add_edge("correction","feedback")
+workflow.add_edge("feedback", END)
 
 
 # Compile
