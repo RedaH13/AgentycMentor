@@ -36,7 +36,7 @@ def run_visualization():
     
     # We pretend the student fixed some OCR typos and clicked "Submit"
     simulated_ui_payload = {
-        "final_confirmed_text": "Calculate minimum transmission time for a 300 KB file given MTU is 1492 bytes. Speed is 56Kbps. My answer is 43.9 seconds because I divided size by speed."
+        "final_confirmed_text": "Calculate minimum transmission time for a 300 KB file given MTU is 1492 bytes. Speed is 56Kbps. My answer is 43.9 seconds because I divided size by speed. I struggled with decomposing the problem into small parts"
     }
     
     # Inject the corrected text into the state

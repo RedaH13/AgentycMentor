@@ -104,16 +104,12 @@ def save_correction_results(session_id: str, correction_data: dict):
             total_score = correction_data.get("total_score", 0)
             passed = 1 if total_score >= 8 else 0 
             
-            critical_errors_list = correction_data.get("critical_errors", [])
-            # list of errors -> a single string (SQL storage)
-            critical_errors_str = "\n".join([f"- {err}" for err in critical_errors_list]) if critical_errors_list else None
-
             # Insert into CorrectionResults
             query_main = """
                 INSERT INTO CorrectionResults (SessionID, TotalScore, Passed)
                 VALUES (?, ?, ?);
             """
-            cursor.execute(query_main, (session_id, total_score, passed, critical_errors_str))
+            cursor.execute(query_main, (session_id, total_score, passed))
 
             # Insert individual Phase Evaluations (Phases 1-5)
             academic_evaluations = correction_data.get("academic_evaluations", [])
