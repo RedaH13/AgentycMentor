@@ -74,7 +74,7 @@ def ensure_student_exists(student_id: int):
     except Exception as e:
         print(f"❌ DB Ensure Student Error: {e}")
 
-def ensure_submission_exists(session_id: str, student_id: int, subject: str, document_type: str = "Assignment"):
+def ensure_submission_exists(session_id: str, student_id: int, subject: str, document_type: str = "Assignment", submission_text: str = None):
     """
     Ensures a submission record exists in the Submissions table
     """
@@ -85,11 +85,21 @@ def ensure_submission_exists(session_id: str, student_id: int, subject: str, doc
             query = """
                 IF NOT EXISTS (SELECT 1 FROM Submissions WHERE SessionID = ?)
                 BEGIN
-                    INSERT INTO Submissions (SessionID, StudentID, Subject_Submission, DocumentType)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO Submissions (SessionID, StudentID, Subject_Submission, DocumentType, SubmissionText)
+                    VALUES (?, ?, ?, ?, ?)
+                END
+                ELSE
+                BEGIN
+                    UPDATE Submissions
+                    SET SubmissionText = ?
+                    WHERE SessionID = ?
                 END
             """
-            cursor.execute(query, (session_id, session_id, student_id, subject, document_type))
+            cursor.execute(query, (
+                session_id,
+                session_id, student_id, subject, document_type, submission_text,
+                submission_text, session_id
+            ))
             conn.commit()
     except Exception as e:
         print(f"DB Ensure Submission Error: {e}")
@@ -110,7 +120,6 @@ def save_correction_results(session_id: str, correction_data: dict):
                 VALUES (?, ?, ?);
             """
             cursor.execute(query_main, (session_id, total_score, passed))
-
             # Insert individual Phase Evaluations (Phases 1-5)
             academic_evaluations = correction_data.get("academic_evaluations", [])
             if academic_evaluations:
@@ -140,3 +149,37 @@ def save_correction_results(session_id: str, correction_data: dict):
             conn.commit()            
     except Exception as e:
         print(f"DB Write Error (Correction Results): {e}")
+
+
+def save_feedback_report(session_id: str, feedback_data: dict):
+    """Writes the segmented feedback data to SQL Server for the Power BI report."""
+    if not feedback_data:
+        return
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            query = """
+            IF EXISTS (SELECT 1 FROM FeedbackReports WHERE SessionID = ?)
+                UPDATE FeedbackReports
+                SET ProfessorSummary = ?, PedagogicalWarning = ?, StudentDraftReport = ?, ApprovalStatus = 'Pending'
+                WHERE SessionID = ?
+            ELSE
+                INSERT INTO FeedbackReports (SessionID, ProfessorSummary, PedagogicalWarning, StudentDraftReport, ApprovalStatus)
+                VALUES (?, ?, ?, ?, 'Pending');
+            """
+            cursor.execute(query, (
+                session_id, feedback_data.get("professor_summary", ""), feedback_data.get("pedagogical_warning", ""),
+                feedback_data.get("student_draft_report", ""),
+                session_id,
+                
+                session_id,
+                feedback_data.get("professor_summary", ""),
+                feedback_data.get("pedagogical_warning", ""),
+                feedback_data.get("student_draft_report", "")
+            ))
+            conn.commit()
+            print(f"DB: Saved Feedback Report for Session {session_id}")
+            
+    except Exception as e:
+        print(f"DB Error (Save Feedback Report): {e}")
