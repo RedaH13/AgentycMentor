@@ -16,6 +16,7 @@ class MASState(TypedDict):
     feedback_data: Optional[Dict[str, Any]]
 
     retrieved_context: Optional[str]
+    langue: Optional[str]
 
     current_step: Optional[str]
     

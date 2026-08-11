@@ -24,6 +24,7 @@ def run_feedback_node(state: MASState) -> dict:
     guidance = state.get("guidance_data", {})
     correction = state.get("correction_data", {})
     subject = state.get("diagnostic_data", {}).get("subject", "Unknown Subject")
+    langue = state.get("language", state.get("diagnostic_data", {}).get("language", "en"))
     
     if not guidance or not correction:
         return {"error": "Feedback Agent failed: Missing guidance or correction data."}
@@ -35,7 +36,8 @@ def run_feedback_node(state: MASState) -> dict:
         formatted_prompt = FEEDBACK_SYSTEM_PROMPT.format(
             subject= subject,
             guidance_data=guidance,
-            correction_data=correction
+            correction_data=correction,
+            langue=langue
         )        
         response = structured_llm.invoke([HumanMessage(content=formatted_prompt)])
         feedback_data = response.model_dump()

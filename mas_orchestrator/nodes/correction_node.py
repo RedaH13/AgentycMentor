@@ -36,6 +36,7 @@ def run_correction_node(state: MASState) -> dict:
     diagnostic_data = state.get("diagnostic_data", {})
     subject = diagnostic_data.get("subject", "Unknown")
     session_id = state.get("session_id")
+    langue = state.get("language", diagnostic_data.get("language", "en"))
     
     # Retrieves the solution manual/context from Qdrant
     retrieved_context = state.get("retrieved_context", "No reference material available.")    
@@ -50,7 +51,8 @@ def run_correction_node(state: MASState) -> dict:
         formatted_prompt = CORRECTION_SYSTEM_PROMPT.format(
             subject=subject,
             reference_materials=retrieved_context,
-            student_text=text_to_analyze
+            student_text=text_to_analyze,
+            langue=langue
         )
         response = structured_llm.invoke([HumanMessage(content=formatted_prompt)])
         correction_data = response.model_dump()

@@ -74,7 +74,7 @@ def ensure_student_exists(student_id: int):
     except Exception as e:
         print(f"❌ DB Ensure Student Error: {e}")
 
-def ensure_submission_exists(session_id: str, student_id: int, subject: str, document_type: str = "Assignment", submission_text: str = None):
+def ensure_submission_exists(session_id: str, student_id: int, subject: str, document_type: str = "Assignment", submission_text: str = None, langue: str=None):
     """
     Ensures a submission record exists in the Submissions table
     """
@@ -85,20 +85,20 @@ def ensure_submission_exists(session_id: str, student_id: int, subject: str, doc
             query = """
                 IF NOT EXISTS (SELECT 1 FROM Submissions WHERE SessionID = ?)
                 BEGIN
-                    INSERT INTO Submissions (SessionID, StudentID, Subject_Submission, DocumentType, SubmissionText)
+                    INSERT INTO Submissions (SessionID, StudentID, Subject_Submission, DocumentType, SubmissionText, Langue)
                     VALUES (?, ?, ?, ?, ?)
                 END
                 ELSE
                 BEGIN
                     UPDATE Submissions
-                    SET SubmissionText = ?
+                    SET SubmissionText = ?, Langue= ?
                     WHERE SessionID = ?
                 END
             """
             cursor.execute(query, (
                 session_id,
                 session_id, student_id, subject, document_type, submission_text,
-                submission_text, session_id
+                submission_text, langue, session_id
             ))
             conn.commit()
     except Exception as e:

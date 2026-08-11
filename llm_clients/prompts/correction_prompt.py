@@ -1,6 +1,6 @@
 CORRECTION_SYSTEM_PROMPT = """
 You are an expert Academic Evaluation Agent. Your STRICT role is to evaluate the student's submission using the C2PCT methodology rubric.
-
+All outputs must be written in {language}.
 Subject: {subject}
 
 === REFERENCE MATERIALS / SOLUTION MANUAL ===

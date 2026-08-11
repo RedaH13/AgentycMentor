@@ -24,6 +24,7 @@ def run_guidance_node(state: MASState) -> dict:
     diagnostic_data = state.get("diagnostic_data", {})
     subject = diagnostic_data.get("subject", "Unknown")
     document_type = diagnostic_data.get("document_type", "Assignment")
+    langue = diagnostic_data.get("langue","Unknown")
 
     student_id = state.get("student_id") # (passed in via API endpoint)
     session_id = state.get("session_id")
@@ -44,7 +45,8 @@ def run_guidance_node(state: MASState) -> dict:
             subject=subject,
             historical_difficulties=history_text,
             retrieved_context=retrieved_context,
-            student_text=text_to_analyze
+            student_text=text_to_analyze,
+            langue=diagnostic_data.get("langue","en")
         )
         
         response = structured_llm.invoke([HumanMessage(content=formatted_prompt)])
@@ -53,7 +55,11 @@ def run_guidance_node(state: MASState) -> dict:
         # Save new difficulties to sql server
         new_difficulties = guidance_data.get("identified_difficulties", [])
         if session_id:
-            ensure_submission_exists(session_id=session_id, student_id=student_id, subject=subject, document_type=document_type)
+            ensure_submission_exists(
+                session_id=session_id, student_id=student_id,
+                subject=subject, document_type=document_type, 
+                submission_text=text_to_analyze, 
+                langue=langue)
             save_new_difficulties(session_id, new_difficulties)      
         return {
             "guidance_data": guidance_data,
