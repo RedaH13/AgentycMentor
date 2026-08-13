@@ -86,7 +86,7 @@ def ensure_submission_exists(session_id: str, student_id: int, subject: str, doc
                 IF NOT EXISTS (SELECT 1 FROM Submissions WHERE SessionID = ?)
                 BEGIN
                     INSERT INTO Submissions (SessionID, StudentID, Subject_Submission, DocumentType, SubmissionText, Langue)
-                    VALUES (?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?)
                 END
                 ELSE
                 BEGIN
@@ -97,7 +97,7 @@ def ensure_submission_exists(session_id: str, student_id: int, subject: str, doc
             """
             cursor.execute(query, (
                 session_id,
-                session_id, student_id, subject, document_type, submission_text,
+                session_id, student_id, subject, document_type, submission_text, langue,
                 submission_text, langue, session_id
             ))
             conn.commit()
