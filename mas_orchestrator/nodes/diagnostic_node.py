@@ -5,13 +5,14 @@ from mas_orchestrator.state.schemas import MASState
 from llm_clients.gemini_client import get_gemini_client
 from llm_clients.prompts.diagnostic_prompts import DIAGNOSTIC_SYSTEM_PROMPT
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
 # schema the agent MUST return
 class DiagnosticOutput(BaseModel):
     subject: str = Field(description="The academic subject, e.g., Mathematics, Physics, Literature, Unknown")
-    langue: str = Field(description="The primary language of the text, e.g., English, French, Spanish")
+    langue: str = Field(description="The primary language of the text, e.g., English, French, Spanish, Japanese, etc. Must be a valid language name.")
     is_readable: bool = Field(description="True if the text is coherent enough to be evaluated")
     structural_issues: str = Field(description="Brief description of missing parts or severe formatting errors, or 'None'")
     

@@ -39,6 +39,7 @@ async def upload_submission(student_id: int, file: UploadFile = File(...)):
             "langue": "Unknown"
         }
         mas_router.stream(initial_state, config=config, stream_mode="updates")
+
         current_state = mas_router.get_state(config).values
         return PipelineResponse(
             session_id=session_id,
@@ -50,28 +51,24 @@ async def upload_submission(student_id: int, file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OCR call failed: {str(e)}")
 
-
 @router.post("/{session_id}/verify", response_model=PipelineResponse)
 async def verify_text(session_id: str, request: VerifyTextRequest):
     """Injects the corrected text and resumes the LangGraph pipeline."""
     config = {"configurable": {"thread_id": session_id}}
-    
     try:
         # Update the state with the user's corrected text
         mas_router.update_state(config, {"final_confirmed_text": request.final_confirmed_text,
                                          "langue": request.langue or "Unknown"})
-        
         # Resume the execution by passing None
         for _ in mas_router.stream(None, config=config, stream_mode="updates"):
             pass
-        
         final_state = mas_router.get_state(config).values
         return PipelineResponse(
             session_id=session_id,
             status="completed",
             message="Pipeline executed successfully. Feedback is pending professor approval.",
             langue=final_state.get("langue"),
-            data={"feedback_data": final_state.get("feedback_data")}
+            data={"final_confirmed_text": final_state.get("final_confirmed_text")}
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Pipeline resumption failed: {str(e)}")

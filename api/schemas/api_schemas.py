@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 
 # STUDENT SCHEMAS (Ingestion & Verification)
-
 class StartPipelineRequest(BaseModel):
     student_id: int = Field(..., description="The ID of the student submitting the work.")
     # In a real frontend, the image would be sent as a multipart form data (UploadFile).
@@ -22,7 +21,6 @@ class PipelineResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
 
 # PROFESSOR SCHEMAS (Review & Approval)
-
 class ReviseReportRequest(BaseModel):
     professor_summary: str = Field(..., description="The manually edited executive summary.")
     pedagogical_warning: str = Field(..., description="The manually edited warning.")
