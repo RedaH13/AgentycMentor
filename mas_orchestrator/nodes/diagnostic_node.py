@@ -11,7 +11,7 @@ load_dotenv()
 # schema the agent MUST return
 class DiagnosticOutput(BaseModel):
     subject: str = Field(description="The academic subject, e.g., Mathematics, Physics, Literature, Unknown")
-    language: str = Field(description="The primary language of the text, e.g., English, French, Spanish")
+    langue: str = Field(description="The primary language of the text, e.g., English, French, Spanish")
     is_readable: bool = Field(description="True if the text is coherent enough to be evaluated")
     structural_issues: str = Field(description="Brief description of missing parts or severe formatting errors, or 'None'")
     
@@ -44,6 +44,8 @@ def run_diagnostic_node(state: MASState) -> dict:
         
         # Invoke the model. It automatically returns a validated Pydantic object
         response = structured_llm.invoke([HumanMessage(content=formatted_prompt)])
+        diagnostic_data = response.model_dump()
+        state["langue"] = diagnostic_data["langue"]
         return {
             # Convert the Pydantic object back to a standard dictionary for the state
             "diagnostic_data": response.model_dump(),

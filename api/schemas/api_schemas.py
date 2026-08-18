@@ -18,7 +18,7 @@ class PipelineResponse(BaseModel):
     session_id: str
     status: str
     message: str
-    language: Optional[str] = None
+    langue: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
 
 # PROFESSOR SCHEMAS (Review & Approval)

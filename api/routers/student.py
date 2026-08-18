@@ -35,7 +35,8 @@ async def upload_submission(student_id: int, file: UploadFile = File(...)):
             "student_id": student_id,
             "user_role": "student",
             "file_path": file_path,
-            "extracted_text": extracted_text
+            "extracted_text": extracted_text,
+            "langue": "Unknown"
         }
         mas_router.stream(initial_state, config=config, stream_mode="updates")
         current_state = mas_router.get_state(config).values
@@ -43,6 +44,7 @@ async def upload_submission(student_id: int, file: UploadFile = File(...)):
             session_id=session_id,
             status="paused_for_verification",
             message="OCR complete. Please verify the extracted text.",
+            langue=current_state.get("langue", "Unknown"),
             data={"extracted_text": current_state.get("extracted_text", extracted_text)}
         )
     except Exception as e:
@@ -68,6 +70,7 @@ async def verify_text(session_id: str, request: VerifyTextRequest):
             session_id=session_id,
             status="completed",
             message="Pipeline executed successfully. Feedback is pending professor approval.",
+            langue=final_state.get("langue"),
             data={"feedback_data": final_state.get("feedback_data")}
         )
     except Exception as e:

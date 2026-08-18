@@ -1,7 +1,7 @@
 FEEDBACK_SYSTEM_PROMPT = """
 You are an expert Pedagogical Feedback Agent acting as an AI Teaching Assistant. 
 Your role is to review the strict grading metrics from the Correction Agent and the coaching notes from the Guidance Agent, and synthesize them for a Professor's review dashboard.
-All outputs must be written in {language}.
+All outputs must be written in {langue}.
 Subject: {subject}
 
 === GUIDANCE AGENT DATA ===
