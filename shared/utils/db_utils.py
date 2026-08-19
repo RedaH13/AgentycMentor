@@ -112,7 +112,7 @@ def save_correction_results(session_id: str, correction_data: dict):
             cursor = conn.cursor()
             # Prepare data for CorrectionResults
             total_score = correction_data.get("total_score", 0)
-            passed = 1 if total_score >= 8 else 0 
+            passed = 1 if total_score >= 10 else 0 
             
             # Insert into CorrectionResults
             query_main = """

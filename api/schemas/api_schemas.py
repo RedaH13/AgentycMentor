@@ -21,12 +21,18 @@ class PipelineResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
 
 # PROFESSOR SCHEMAS (Review & Approval)
+class PhaseEvaluationUpdate(BaseModel):
+    phase_name: str = Field(..., description="Name of the C2PCT phase")
+    score: int = Field(..., description="Revised score (0-3)")
+    justification: str = Field(..., description="Revised justification")
+
 class ReviseReportRequest(BaseModel):
     professor_summary: str = Field(..., description="The manually edited executive summary.")
     pedagogical_warning: str = Field(..., description="The manually edited warning.")
     student_draft_report: str = Field(..., description="The manually edited student feedback.")
-    critical_errors: Optional[str] = None
     professor_observations: Optional[str] = None
+
+    critical_errors: Optional[List[str]] = Field(None, description="The final, approved list of critical error bullet points")
     total_score: Optional[int] = Field(None, description="The manually overridden total score")
     passed: Optional[bool] = Field(None, description="Manually overridden Pass/Fail status")
-    #phase_evaluations: Optional[List[PhaseUpdate]] = Field(None, description="List of any phases the professor manually adjusted")
+    phase_evaluations: Optional[List[PhaseEvaluationUpdate]] = Field(None, description="List of any phases the professor manually adjusted")

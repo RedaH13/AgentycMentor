@@ -18,12 +18,6 @@ class PendingReport(BaseModel):
 class ProfessorResponse(BaseModel):
     message: str
 
-class PhaseUpdate(BaseModel):
-    phase_name: str = Field(..., description="The exact name of the C2PCT phase (e.g., 'Data and Planning')")
-    score: int = Field(..., description="The revised score (0-3)")
-    justification: str = Field(..., description="The revised justification for the score")
-
-
 @router.get("/reports/pending", response_model= List[PendingReport])
 async def get_pending_reports():
     """Fetches all reports waiting for professor approval from SQL Server."""
@@ -61,7 +55,7 @@ async def approve_report(session_id: str):
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE FeedbackReports SET ApprovalStatus = 'Approved' WHERE SessionID = ?",
+                "UPDATE FeedbackReports SET ApprovalStatus = 'Approved', ApprovedAt = GETDATE() WHERE SessionID = ?",
                 (session_id,)
             )
             if cursor.rowcount == 0:
@@ -80,15 +74,40 @@ async def revise_and_approve_report(session_id: str, request: ReviseReportReques
             cursor = conn.cursor()
             query = """
                 UPDATE FeedbackReports 
-                SET ProfessorSummary = ?, PedagogicalWarning = ?, StudentDraftReport = ?, ApprovalStatus = 'Approved'
+                SET ProfessorSummary = ?, PedagogicalWarning = ?, StudentDraftReport = ?, 
+                ProfessorObservations = ?, ApprovalStatus = 'Approved', ApprovedAt = GETDATE()
                 WHERE SessionID = ?
             """
             cursor.execute(query, (
                 request.professor_summary,
                 request.pedagogical_warning,
                 request.student_draft_report,
+                request.professor_observations,
                 session_id
             ))
+
+            if request.phase_evaluations:
+                for phase in request.phase_evaluations:
+                    cursor.execute("""
+                        UPDATE PhaseEvaluations 
+                        SET Score = ?, Justification = ?
+                        WHERE SessionID = ? AND PhaseName = ?
+                    """, (phase.score, phase.justification, session_id, phase.phase_name))
+                cursor.execute("""SELECT SUM(Score) FROM PhaseEvaluations WHERE SessionID = ?""", (session_id,))
+                total_score = cursor.fetchone()[0] or 0
+                passed = 1 if total_score >= 10 else 0
+                cursor.execute("""UPDATE CorrectionResults 
+                        SET TotalScore = ?, Passed = ?, GradedAt = GETDATE() WHERE SessionID = ?""", (total_score, passed, session_id))
+            
+            if request.critical_errors is not None:
+                cursor.execute("SELECT ErrorText FROM CorrectionErrors WHERE SessionID = ?", (session_id,))
+                query_insert_error = "INSERT INTO CorrectionErrors (SessionID, ErrorText) VALUES (?, ?)"
+                for error_text in request.critical_errors:
+                    cursor.execute(query_insert_error, (session_id, error_text))
+            
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail=f"Session {session_id} not found.")
+            
             conn.commit()
         return ProfessorResponse(message=f"Report for session {session_id} successfully revised and approved.")
     except Exception as e:
