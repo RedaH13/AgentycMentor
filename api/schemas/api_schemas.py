@@ -25,3 +25,8 @@ class ReviseReportRequest(BaseModel):
     professor_summary: str = Field(..., description="The manually edited executive summary.")
     pedagogical_warning: str = Field(..., description="The manually edited warning.")
     student_draft_report: str = Field(..., description="The manually edited student feedback.")
+    critical_errors: Optional[str] = None
+    professor_observations: Optional[str] = None
+    total_score: Optional[int] = Field(None, description="The manually overridden total score")
+    passed: Optional[bool] = Field(None, description="Manually overridden Pass/Fail status")
+    #phase_evaluations: Optional[List[PhaseUpdate]] = Field(None, description="List of any phases the professor manually adjusted")

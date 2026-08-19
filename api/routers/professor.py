@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any, List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from api.schemas.api_schemas import ReviseReportRequest
+from datetime import datetime
 from shared.utils.db_utils import get_db_connection
 
 router = APIRouter(prefix="/api/v1/professor", tags=["Professor Interface"])
@@ -11,11 +12,17 @@ class PendingReport(BaseModel):
     professor_summary: str
     pedagogical_warning: str
     student_draft_report: str
-    language: str | None = None
-    generated_at: str | None = None
+    langue: str | None = None
+    generated_at: datetime | None = None
 
 class ProfessorResponse(BaseModel):
     message: str
+
+class PhaseUpdate(BaseModel):
+    phase_name: str = Field(..., description="The exact name of the C2PCT phase (e.g., 'Data and Planning')")
+    score: int = Field(..., description="The revised score (0-3)")
+    justification: str = Field(..., description="The revised justification for the score")
+
 
 @router.get("/reports/pending", response_model= List[PendingReport])
 async def get_pending_reports():
@@ -24,8 +31,9 @@ async def get_pending_reports():
         with get_db_connection() as conn:
             cursor = conn.cursor()
             query = """
-                SELECT SessionID, ProfessorSummary, PedagogicalWarning, StudentDraftReport, Langue, GeneratedAt
-                FROM FeedbackReports 
+                SELECT fr.SessionID, fr.ProfessorSummary, fr.PedagogicalWarning, fr.StudentDraftReport, fr.GeneratedAt, sb.Langue
+                FROM FeedbackReports fr JOIN Submissions sb ON
+                fr.SessionID = sb.SessionID
                 WHERE ApprovalStatus = 'Pending'
             """
             cursor.execute(query)
@@ -36,8 +44,8 @@ async def get_pending_reports():
                     professor_summary=row.ProfessorSummary,
                     pedagogical_warning=row.PedagogicalWarning,
                     student_draft_report=row.StudentDraftReport,
-                    language=getattr(row, "Langue", None),
-                    generated_at=getattr(row, "GeneratedAt", None)
+                    langue=getattr(row, "Langue", None),
+                    generated_at=str(getattr(row, "GeneratedAt", None)) if getattr(row, "GeneratedAt", None) else None
                 )
                 for row in rows
             ]
@@ -56,6 +64,8 @@ async def approve_report(session_id: str):
                 "UPDATE FeedbackReports SET ApprovalStatus = 'Approved' WHERE SessionID = ?",
                 (session_id,)
             )
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail=f"Report {session_id} not found.")
             conn.commit()
         return ProfessorResponse(message=f"Report for session {session_id} approved.")
     except Exception as e:
