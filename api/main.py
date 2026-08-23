@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routers import student, professor
+from api.routers import student, professor, auth
 
 
 tags_metadata = [
@@ -26,6 +26,7 @@ app.add_middleware(
 )
 
 # Register the endpoints from router files
+app.include_router(auth.router)
 app.include_router(student.router)
 app.include_router(professor.router)
 
