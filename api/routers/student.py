@@ -1,14 +1,16 @@
 import uuid, requests, os, httpx
-from fastapi import UploadFile, File, APIRouter, HTTPException
+from fastapi import UploadFile, File, APIRouter, HTTPException, Depends
 from api.schemas.api_schemas import StartPipelineRequest, VerifyTextRequest, PipelineResponse
 from mas_orchestrator.graphs.router_graph import mas_router
+from api.dependencies import get_current_student
 
 router = APIRouter(prefix="/api/v1/student", tags=["Student Interface"])
 
 UPLOAD_DIR = "uploads"
 
 @router.post("/upload", response_model=PipelineResponse)
-async def upload_submission(student_id: int, file: UploadFile = File(...)):
+async def upload_submission(file: UploadFile = File(...), user: dict= Depends(get_current_student)):
+    student_id = user["user_id"]
     session_id = str(uuid.uuid4())
     config = {"configurable": {"thread_id": session_id}}
     os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -17,7 +19,7 @@ async def upload_submission(student_id: int, file: UploadFile = File(...)):
     with open(file_path, "wb") as f:
         f.write(await file.read())
     try:
-        # Call OCR microservice safely
+        # Call OCR microservice
         async with httpx.AsyncClient() as client:
             with open(file_path, "rb") as f:
                 resp = await client.post(
@@ -52,14 +54,19 @@ async def upload_submission(student_id: int, file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"OCR call failed: {str(e)}")
 
 @router.post("/{session_id}/verify", response_model=PipelineResponse)
-async def verify_text(session_id: str, request: VerifyTextRequest):
+async def verify_text(session_id: str, request: VerifyTextRequest, user: dict = Depends(get_current_student)):
     """Injects the corrected text and resumes the LangGraph pipeline."""
+    student_id = user["user_id"]
     config = {"configurable": {"thread_id": session_id}}
     try:
+        current_state = mas_router.get_state(config).values
+        if current_state.get("student_id") != student_id:
+            raise HTTPException(status_code=403, detail="You do not have permission to modify this submission.")
         # Update the state with the user's corrected text
         mas_router.update_state(config, {"final_confirmed_text": request.final_confirmed_text,
-                                         "langue": request.langue or "Unknown"})
-        # Resume the execution by passing None
+                                         "langue": request.langue or "Unknown",
+                                         "student_id": student_id})
+        # Resume the execution 
         for _ in mas_router.stream(None, config=config, stream_mode="updates"):
             pass
         final_state = mas_router.get_state(config).values

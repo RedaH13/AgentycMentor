@@ -28,10 +28,19 @@ async def register_user(request: UserCreate):
             # hash pw and insert the user
             hashed_pw = get_password_hash(request.password)
             
-            query = """INSERT INTO Users (Email, HashedPassword, Role, IsActive)
-                VALUES (?, ?, ?, 1)"""
-            cursor.execute(query, (request.email, hashed_pw, request.role))
+            query = """INSERT INTO Users (Email, HashedPassword, Role, UserIdentifier, IsActive, CreatedAt)
+                VALUES (?, ?, ?, ?, 1, GETDATE())"""
+            cursor.execute(query, (request.email, hashed_pw, request.role, request.user_identifier))
             conn.commit()
+
+            cursor.execute("SELECT SCOPE_IDENTITY()")
+            user_id = cursor.fetchone()[0]
+            if request.role == "student":
+                cursor.execute("""
+                    INSERT INTO Students (UserID, UserIdentifier, CreatedAt)
+                    VALUES (?, ?, GETDATE())
+                """, (user_id, request.user_identifier))
+                conn.commit()
             return {"message": f"User {request.email} registered successfully as {request.role}."}           
     except HTTPException:
         raise

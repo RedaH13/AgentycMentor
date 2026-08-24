@@ -1,19 +1,16 @@
 from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from api.utils.security import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+security = HTTPBearer()
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
-    """Decodes the JWT and extracts the user data. Raises a 401 Unauthorized if the token is invalid or missing."""
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    token = credentials.credentials
     payload = decode_access_token(token)
-    
     user_id = payload.get("sub")
     role = payload.get("role")
-    
     if user_id is None or role is None:
         raise HTTPException(status_code=401, detail="Invalid token payload.")
-        
     return {"user_id": int(user_id), "role": role}
 
 def get_current_student(user: dict = Depends(get_current_user)) -> dict:

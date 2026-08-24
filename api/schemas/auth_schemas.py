@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=8, description="Plain text password (will be hashed).")
     role: str = Field(..., description="Must be 'student', 'professor', or 'admin'.")
     invite_code: Optional[str] = Field(None, description="Required security code for creating professor or admin accounts.")
+    user_identifier: str = Field(..., description= "User's full name")
 
 # user attempts to log in
 class UserLogin(BaseModel):
