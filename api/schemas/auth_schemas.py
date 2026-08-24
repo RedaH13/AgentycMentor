@@ -19,3 +19,4 @@ class TokenResponse(BaseModel):
     access_token: str = Field(..., description="The JWT string.")
     token_type: str = Field("bearer", description="The type of token.")
     role: str = Field(..., description="The user's role for frontend routing.")
+    user_identifier: str = Field(..., description="The student's full name")

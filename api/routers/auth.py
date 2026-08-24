@@ -9,6 +9,13 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 PROFESSOR_INVITE_CODE = "MAS-PROF-2026"
 ADMIN_INVITE_CODE = "MAS-ADMIN-MASTER"
 
+def row_to_dict(cursor, row):
+    if not row:
+        return None
+    cols = [col[0] for col in cursor.description]
+    return dict(zip(cols, row))
+
+
 @router.post("/register")
 async def register_user(request: UserCreate):
     """Registers a new user. Enforces invite codes for elevated roles."""
@@ -28,13 +35,18 @@ async def register_user(request: UserCreate):
             # hash pw and insert the user
             hashed_pw = get_password_hash(request.password)
             
-            query = """INSERT INTO Users (Email, HashedPassword, Role, UserIdentifier, IsActive, CreatedAt)
-                VALUES (?, ?, ?, ?, 1, GETDATE())"""
+            query = """
+            INSERT INTO Users (Email, HashedPassword, Role, UserIdentifier, IsActive, CreatedAt)
+                OUTPUT INSERTED.UserID
+                VALUES (?, ?, ?, ?, 1, GETDATE());
+            """
             cursor.execute(query, (request.email, hashed_pw, request.role, request.user_identifier))
+            row = cursor.fetchone()
+            user_id = int(row[0]) if row and row[0] is not None else None
+            if not user_id:
+                raise HTTPException(status_code=500, detail="Failed to retrieve new UserID")
             conn.commit()
-
-            cursor.execute("SELECT SCOPE_IDENTITY()")
-            user_id = cursor.fetchone()[0]
+            print("DEBUG: SCOPE_IDENTITY() returned:", row)
             if request.role == "student":
                 cursor.execute("""
                     INSERT INTO Students (UserID, UserIdentifier, CreatedAt)
@@ -55,24 +67,26 @@ async def login_user(request: UserLogin):
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT UserID, HashedPassword, Role, IsActive FROM Users WHERE Email = ?", 
+                "SELECT UserID, HashedPassword, Role, IsActive, UserIdentifier FROM Users WHERE Email = ?", 
                 (request.email,))
-            user = cursor.fetchone()
+            row = cursor.fetchone()
+            user = row_to_dict(cursor, row)
             
         if not user:
             raise HTTPException(status_code=401, detail="Invalid email or password")
-        if not user.IsActive:
+        if not user["IsActive"]:
             raise HTTPException(status_code=403, detail= "Account has been deactivated")
             
-        if not verify_password(request.password, user.HashedPassword):
+        if not verify_password(request.password, user["HashedPassword"]):
             raise HTTPException(status_code=401, detail="Invalid email or password")
             
         # gen JWT
-        token = create_access_token(user_id=user.UserID, role=user.Role)
+        token = create_access_token(user_id=user["UserID"], role=user["Role"])
         return TokenResponse(
             access_token=token,
             token_type="bearer",
-            role=user.Role
+            role=user["Role"],
+            user_identifier=user["UserIdentifier"],
         )        
     except HTTPException:
         raise
