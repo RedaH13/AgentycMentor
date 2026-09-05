@@ -8,6 +8,14 @@ router = APIRouter(prefix="/api/v1/student", tags=["Student Interface"])
 
 UPLOAD_DIR = "uploads"
 
+def call_ocr_service(file_path: str):
+    # OCR is now mounted under /ocr/api/v1/ocr
+    url = "http://127.0.0.1:8001/ocr/api/v1/ocr"
+    files = {"file": open(file_path, "rb")}
+    response = requests.post(url, files=files)
+    response.raise_for_status()
+    return response.json()
+
 @router.post("/upload", response_model=PipelineResponse)
 async def upload_submission(file: UploadFile = File(...), user: dict= Depends(get_current_student)):
     student_id = user["user_id"]
@@ -23,13 +31,20 @@ async def upload_submission(file: UploadFile = File(...), user: dict= Depends(ge
         async with httpx.AsyncClient() as client:
             with open(file_path, "rb") as f:
                 resp = await client.post(
-                    "http://127.0.0.1:8001/api/v1/ocr/extract",
+                    "http://127.0.0.1:8000/ocr/api/v1/ocr/extract",
                     files={"file": f},
                     data={"engine": "auto"},
                     timeout=30.0
                 )
         ocr_result = resp.json()
-        extracted_text = ocr_result.get("full_text", "")
+
+        # Be flexible with keys
+        extracted_text = (
+            ocr_result.get("full_text")
+            or ocr_result.get("text")
+            or ocr_result.get("result", {}).get("text", "")
+            or ""
+        )
 
         # Initialize pipeline state
         initial_state = {

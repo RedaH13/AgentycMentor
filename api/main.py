@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.routers import student, professor, auth
+from ocr_service.main import app as ocr_app
 
 
 tags_metadata = [
@@ -26,6 +27,7 @@ app.add_middleware(
 )
 
 # Register the endpoints from router files
+app.mount("/ocr", ocr_app)
 app.include_router(auth.router)
 app.include_router(student.router)
 app.include_router(professor.router)
