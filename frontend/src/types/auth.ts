@@ -1,10 +1,3 @@
-export interface ApiError {
-    response?: {
-        data?: {
-            detail?: string;
-        };
-    };
-}
 
 export type Role = "student" | "professor" | "admin";
 

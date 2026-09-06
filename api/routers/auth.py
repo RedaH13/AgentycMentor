@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from api.schemas.auth_schemas import UserCreate, UserLogin, TokenResponse
 from api.utils.security import get_password_hash, verify_password, create_access_token
 from shared.utils.db_utils import get_db_connection
+from api.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
@@ -92,3 +93,4 @@ async def login_user(request: UserLogin):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    

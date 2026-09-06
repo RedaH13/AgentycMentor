@@ -82,7 +82,7 @@ export default function RegisterForm() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         className="w-full px-4 py-3 font-sans text-sm text-zinc-900 bg-zinc-50/50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 transition-all placeholder:text-zinc-400"
-                        placeholder="you@university.edu"
+                        placeholder=""
                     />
                 </div>
 
@@ -96,7 +96,7 @@ export default function RegisterForm() {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         className="w-full px-4 py-3 font-sans text-sm text-zinc-900 bg-zinc-50/50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 transition-all placeholder:text-zinc-400"
-                        placeholder="••••••••"
+                        placeholder=""
                     />
                 </div>
 
@@ -111,7 +111,7 @@ export default function RegisterForm() {
                             onChange={(e) => setInviteCode(e.target.value)}
                             required
                             className="w-full px-4 py-3 font-sans text-sm text-zinc-900 bg-zinc-50/50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 transition-all placeholder:text-zinc-400"
-                            placeholder="e.g. MAS-PROF-2026"
+                            placeholder="Secret Invite Code"
                         />
                     </div>
                 )}
