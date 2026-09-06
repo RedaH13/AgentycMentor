@@ -1,6 +1,6 @@
 from mas_orchestrator.state.schemas import MASState
 from qdrant_client.http import models
-from rag_service.vectorstore.qdrant_client import get_qdrant_vector_store
+# from rag_service.vectorstore.qdrant_client import get_qdrant_vector_store
 
 def run_rag_retrieve_node(state: MASState) -> dict:
     """Queries Qdrant for course materials matching the student's submission."""
@@ -8,7 +8,8 @@ def run_rag_retrieve_node(state: MASState) -> dict:
     text_to_analyze = state.get("final_confirmed_text", "")
     diagnostic_data = state.get("diagnostic_data", {})
     subject = diagnostic_data.get("subject", "Unknown")
-    
+    return {"retrieved_context": "RAG service disabled for now.", "error": None}
+
     if not text_to_analyze:
         return {"retrieved_context": "No text available to query course materials."}
 

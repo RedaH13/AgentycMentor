@@ -18,82 +18,99 @@ export default function RegisterForm() {
     };
 
     return (
-        <div className="w-full max-w-md mx-auto p-8 bg-white border border-gray-100 rounded-lg shadow-sm">
+        <div className="w-full max-w-md mx-auto p-8 sm:p-10 bg-white rounded-[2rem] shadow-sm border border-zinc-100 antialiased">
+            {/* Header */}
             <div className="mb-8 text-center">
-                <h2 className="text-2xl font-semibold text-gray-900">Create an account</h2>
-                <p className="text-sm text-gray-500 mt-2">Join the MAS Pedagogic Grading Platform</p>
+                <h2 className="text-3xl font-serif font-bold tracking-tight text-zinc-900">
+                    Create an Account
+                </h2>
+                <p className="text-sm font-serif text-zinc-500 mt-2">
+                    Join the MAS Pedagogic Grading Platform powered by AI
+                </p>
             </div>
 
+            {/* Status Messages */}
             {error && (
-                <div className="mb-6 p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-md">
+                <div className="mb-6 p-4 text-sm font-sans text-red-800 bg-red-50/50 border border-red-100 rounded-2xl">
                     {error}
                 </div>
             )}
 
             {success && (
-                <div className="mb-6 p-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md">
+                <div className="mb-6 p-4 text-sm font-sans text-emerald-800 bg-emerald-50/50 border border-emerald-100 rounded-2xl">
                     Registration successful! Redirecting to login...
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">I am a...</label>
+                    <label className="block text-sm font-serif font-medium text-zinc-700 mb-3">
+                        I am a...
+                    </label>
                     <div className="flex gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex items-center gap-2 cursor-pointer p-2 pr-4 rounded-xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-100">
                             <input
                                 type="radio"
                                 value="student"
                                 checked={role === 'student'}
                                 onChange={() => setRole('student')}
-                                className="text-gray-900 focus:ring-gray-900"
+                                className="text-zinc-900 border-zinc-300 focus:ring-zinc-900 focus:ring-offset-0"
                             />
-                            <span className="text-sm text-gray-700">Student</span>
+                            <span className="text-sm font-serif text-zinc-700">Student</span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex items-center gap-2 cursor-pointer p-2 pr-4 rounded-xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-100">
                             <input
                                 type="radio"
                                 value="professor"
                                 checked={role === 'professor'}
                                 onChange={() => setRole('professor')}
-                                className="text-gray-900 focus:ring-gray-900"
+                                className="text-zinc-900 border-zinc-300 focus:ring-zinc-900 focus:ring-offset-0"
                             />
-                            <span className="text-sm text-gray-700">Professor</span>
+                            <span className="text-sm font-serif text-zinc-700">Professor</span>
                         </label>
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label className="block text-sm font-serif font-medium text-zinc-700 mb-2">
+                        Email
+                    </label>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full px-4 py-2 text-gray-900 bg-transparent border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-colors"
+                        className="w-full px-4 py-3 font-sans text-sm text-zinc-900 bg-zinc-50/50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 transition-all placeholder:text-zinc-400"
+                        placeholder="you@university.edu"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <label className="block text-sm font-serif font-medium text-zinc-700 mb-2">
+                        Password
+                    </label>
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full px-4 py-2 text-gray-900 bg-transparent border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-colors"
+                        className="w-full px-4 py-3 font-sans text-sm text-zinc-900 bg-zinc-50/50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 transition-all placeholder:text-zinc-400"
+                        placeholder="••••••••"
                     />
                 </div>
 
                 {role === 'professor' && (
                     <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Invite Code</label>
+                        <label className="block text-sm font-serif font-medium text-zinc-700 mb-2">
+                            Invite Code
+                        </label>
                         <input
                             type="text"
                             value={inviteCode}
                             onChange={(e) => setInviteCode(e.target.value)}
                             required
-                            className="w-full px-4 py-2 text-gray-900 bg-transparent border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-colors"
+                            className="w-full px-4 py-3 font-sans text-sm text-zinc-900 bg-zinc-50/50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 transition-all placeholder:text-zinc-400"
                             placeholder="e.g. MAS-PROF-2026"
                         />
                     </div>
@@ -102,15 +119,16 @@ export default function RegisterForm() {
                 <button
                     type="submit"
                     disabled={isLoading || success}
-                    className="w-full py-2.5 px-4 mt-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-400 transition-colors"
+                    className="w-full py-3 px-4 mt-4 bg-zinc-900 text-white text-sm font-sans font-medium rounded-full shadow-sm hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                     {isLoading ? 'Creating account...' : 'Create Account'}
                 </button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-gray-500">
+            {/* Footer */}
+            <div className="mt-8 text-center text-sm font-serif text-zinc-500">
                 Already have an account?{' '}
-                <Link href="/login" className="text-gray-900 font-medium hover:underline">
+                <Link href="/login" className="text-zinc-900 font-sans font-medium hover:underline underline-offset-4">
                     Sign in
                 </Link>
             </div>

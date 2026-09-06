@@ -15,39 +15,50 @@ export default function LoginForm() {
     };
 
     return (
-        <div className="w-full max-w-md mx-auto p-8 bg-white border border-gray-100 rounded-lg shadow-sm">
+        <div className="w-full max-w-md mx-auto p-8 sm:p-10 bg-white rounded-[2rem] shadow-sm border border-zinc-100 antialiased">
+            {/* Header */}
             <div className="mb-8 text-center">
-                <h2 className="text-2xl font-semibold text-gray-900">Welcome back</h2>
-                <p className="text-sm text-gray-500 mt-2">Enter your credentials to access your dashboard</p>
+                <h2 className="text-3xl font-serif font-bold tracking-tight text-zinc-900">
+                    Welcome Back
+                </h2>
+                <p className="text-sm font-serif text-zinc-500 mt-2">
+                    Sign in to access your dashboard
+                </p>
             </div>
 
+            {/* Error Message */}
             {error && (
-                <div className="mb-6 p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-md">
+                <div className="mb-6 p-4 text-sm font-sans text-red-800 bg-red-50/50 border border-red-100 rounded-2xl">
                     {error}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label className="block text-sm font-serif font-medium text-zinc-700 mb-2">
+                        Email
+                    </label>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full px-4 py-2 text-gray-900 bg-transparent border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-colors"
+                        className="w-full px-4 py-3 font-sans text-sm text-zinc-900 bg-zinc-50/50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 transition-all placeholder:text-zinc-400"
                         placeholder="you@university.edu"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <label className="block text-sm font-serif font-medium text-zinc-700 mb-2">
+                        Password
+                    </label>
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full px-4 py-2 text-gray-900 bg-transparent border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-colors"
+                        className="w-full px-4 py-3 font-sans text-sm text-zinc-900 bg-zinc-50/50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400 transition-all placeholder:text-zinc-400"
                         placeholder="••••••••"
                     />
                 </div>
@@ -55,15 +66,16 @@ export default function LoginForm() {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-2.5 px-4 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                    className="w-full py-3 px-4 mt-2 bg-zinc-900 text-white text-sm font-sans font-medium rounded-full shadow-sm hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                     {isLoading ? 'Signing in...' : 'Sign In'}
                 </button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-gray-500">
-                Don't have an account?{' '}
-                <Link href="/register" className="text-gray-900 font-medium hover:underline">
+            {/* Footer */}
+            <div className="mt-8 text-center text-sm font-serif text-zinc-500">
+                Don’t have an account?{' '}
+                <Link href="/register" className="text-zinc-900 font-sans font-medium hover:underline underline-offset-4">
                     Register here
                 </Link>
             </div>
