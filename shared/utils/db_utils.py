@@ -79,9 +79,15 @@ def ensure_submission_exists(session_id: str, student_id: int, subject: str, doc
     Ensures a submission record exists in the Submissions table
     """
     try:
-        ensure_student_exists(student_id)
         with get_db_connection() as conn:
             cursor = conn.cursor()
+            cursor.execute("SELECT StudentID FROM Students WHERE UserID = ?", (student_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                raise Exception(f"CRITICAL: No Student profile found for UserID {student_id}")
+                
+            true_student_id = row[0]
             query = """
                 IF NOT EXISTS (SELECT 1 FROM Submissions WHERE SessionID = ?)
                 BEGIN
@@ -97,7 +103,7 @@ def ensure_submission_exists(session_id: str, student_id: int, subject: str, doc
             """
             cursor.execute(query, (
                 session_id,
-                session_id, student_id, subject, document_type, submission_text, langue,
+                session_id, true_student_id, subject, document_type, submission_text, langue,
                 submission_text, langue, session_id
             ))
             conn.commit()

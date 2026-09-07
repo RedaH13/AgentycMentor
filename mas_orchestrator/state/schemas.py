@@ -9,6 +9,7 @@ class MASState(TypedDict):
     
     # Data payloads
     ocr_payload: Optional[Dict[str, Any]]
+    extracted_text: Optional[str]
     final_confirmed_text: Optional[str]
     diagnostic_data: Optional[Dict[str, Any]]
     guidance_data: Optional[Dict[str, Any]]

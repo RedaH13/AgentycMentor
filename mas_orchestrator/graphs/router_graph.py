@@ -53,7 +53,6 @@ workflow.add_conditional_edges(
         "rag_retrieve": "rag_retrieve"
     }
 )
-workflow.add_edge("diagnostic","rag_retrieve")
 workflow.add_edge("rag_retrieve","guidance")
 workflow.add_edge("guidance","correction")
 workflow.add_edge("correction","feedback")
