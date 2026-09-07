@@ -13,6 +13,21 @@ export const useSubmission = () => {
     const [extractedText, setExtractedText] = useState<string>("");
     const [langue, setLangue] = useState<string>("Unknown");
 
+    const parseApiError = (err: any, defaultMsg: string): string => {
+        if (err.response?.data?.detail) {
+            const detail = err.response.data.detail;
+            //(Array of objects)
+            if (Array.isArray(detail)) {
+                return detail.map(d => `${d.loc[d.loc.length - 1]}: ${d.msg}`).join(' | ');
+            }
+            // standard string error
+            if (typeof detail === 'string') {
+                return detail;
+            }
+        }
+        return defaultMsg;
+    };
+
     // Upload the file to trigger OCR
     const uploadSubmission = async (file: File) => {
         setStatus("uploading");
@@ -28,7 +43,7 @@ export const useSubmission = () => {
             setSessionId(response.data.session_id);
             setExtractedText(response.data.data.extracted_text);
             setLangue(response.data.langue);
-            setStatus("verifying"); // Move to HIL pause
+            setStatus("verifying");
         } catch (err: any) {
             setError(err.response?.data?.detail || "Failed to upload and process file.");
             setStatus("idle");
@@ -37,17 +52,21 @@ export const useSubmission = () => {
 
     // Send the verified text to resume LangGraph
     const verifyText = async (finalText: string, finalLangue: string) => {
-        setStatus("submitting");
+        setStatus('submitting');
         setError(null);
         try {
-            await api.post(`/student/${sessionId}/verify`, {
+            const payload = {
+                session_id: sessionId,
                 final_confirmed_text: finalText,
                 langue: finalLangue,
-            });
-            setStatus("done");
+            };
+
+            await api.post(`/student/${sessionId}/verify`, payload);
+
+            setStatus('done');
         } catch (err: any) {
-            setError(err.response?.data?.detail || "Failed to resume pipeline.");
-            setStatus("verifying");
+            setError(parseApiError(err, 'Failed to resume pipeline.'));
+            setStatus('verifying');
         }
     };
 

@@ -20,7 +20,7 @@ app = FastAPI(
 # web frontend (React, Angular, etc.) can make requests to this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # replace "*" with frontend URL (e.g., "http://localhost:3000")
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
