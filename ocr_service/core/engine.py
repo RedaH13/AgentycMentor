@@ -9,6 +9,7 @@ from PIL import Image
 from google import genai
 from google.genai import types
 import json
+import mimetypes
 from ocr_service.core.preprocessor import preprocess_image
 from ocr_service.core.postprocessor import clean_text
 from ocr_service.config.settings import settings
@@ -45,7 +46,9 @@ def extract_with_fitz(file_bytes: bytes):
 def parse_ocrspace_to_schema(raw_json: dict) -> list:
     """Translates OCR.Space's native JSON into PageBlock schema."""
     pages = []
-    for result in raw_json.get("ParsedResults", []):
+    parsed_results = raw_json.get("ParsedResults") or [] 
+    
+    for result in parsed_results:
         page = PageBlock(lines=[])
         overlay = result.get("TextOverlay") or {}
         for line_data in overlay.get("Lines", []):
@@ -60,7 +63,6 @@ def parse_ocrspace_to_schema(raw_json: dict) -> list:
                         height=w_data.get("Height", 0)
                     )
                 ))
-            # OCR.Space provides MinTop and MaxHeight, calculate min_x and max_x from the words.
             min_y = line_data.get("MinTop", 0)
             max_h = line_data.get("MaxHeight", 0)
             min_x = min([w.box.x for w in words]) if words else 0
@@ -158,21 +160,39 @@ def process_image(file_bytes: bytes, filename: str = "unknown", ocr_engine: str 
         return {"error": f"Image processing failed: {str(e)}"}
 
 def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace") -> OCRDatabaseRecord:
+    mime_type, _ = mimetypes.guess_type(filename)
+    
+    if not mime_type:
+        if file_bytes.startswith(b'\x89PNG\r\n\x1a\n'):
+            mime_type = "image/png"
+            if not filename.lower().endswith('.png'): filename += ".png"
+        elif file_bytes.startswith(b'%PDF'):
+            mime_type = "application/pdf"
+            if not filename.lower().endswith('.pdf'): filename += ".pdf"
+        else:
+            mime_type = "image/jpeg"
+            if not filename.lower().endswith(('.jpg', '.jpeg')): filename += ".jpg"
+
     if provider == "ocrspace":
         import requests
         api_key = settings.OCRSPACE_API_KEY
+        
         resp = requests.post(
             "https://api.ocr.space/parse/image",
-            files={"file": (filename, file_bytes, "image/jpeg")},
+            files={"file": (filename, file_bytes, mime_type)}, 
             data={"language": "eng", "isOverlayRequired": "true"},
             headers={"apikey": api_key}
         )
         
         result_json = resp.json()
+        
+        if result_json.get("IsErroredOnProcessing"):
+            error_msg = result_json.get("ErrorMessage", ["Unknown OCR.Space Error"])[0]
+            raise ValueError(f"OCR.Space rejected the file: {error_msg}")
+            
         pages = parse_ocrspace_to_schema(result_json)
         
-        # Extract full raw text safely
-        parsed_results = result_json.get("ParsedResults", [{}])
+        parsed_results = result_json.get("ParsedResults") or [{}]
         full_text = parsed_results[0].get("ParsedText", "") if parsed_results else ""
 
         return OCRDatabaseRecord(
@@ -192,10 +212,11 @@ def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace")
         Each line object must have 'line_text', 'ymin', 'xmin', 'ymax', 'xmax', and an array of 'words'. 
         Each word object must have 'text', 'ymin', 'xmin', 'ymax', 'xmax'.
         """
+        
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=[
-                genai.types.Part.from_bytes(data=file_bytes, mime_type="image/jpeg"),
+                genai.types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
                 prompt
             ],
             config=types.GenerateContentConfig(
@@ -205,7 +226,6 @@ def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace")
         pages = []
         full_text_parts = []
         
-        # 3. Parse Gemini's JSON and map it to DB Schema
         try:
             gemini_data = json.loads(response.text)
             page = PageBlock(lines=[])
@@ -240,7 +260,6 @@ def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace")
             full_text = "\n".join(full_text_parts)
             
         except (json.JSONDecodeError, TypeError, ValueError):
-            # Safe fallback
             full_text = response.text
             pages = []
 

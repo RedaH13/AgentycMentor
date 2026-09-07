@@ -18,11 +18,10 @@ export default function StudentDashboard() {
 
     const [activeTab, setActiveTab] = useState<"new" | "reports">("new");
     const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            uploadSubmission(e.target.files[0]);
-        }
+    const handleFileSelect = (file: File, engine: string) => {
+        uploadSubmission(file, engine); // Pass both to the hook
     };
+
 
     return (
         <ProtectedRoute allowedRoles={["student"]}>

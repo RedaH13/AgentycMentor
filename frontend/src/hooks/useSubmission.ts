@@ -16,11 +16,9 @@ export const useSubmission = () => {
     const parseApiError = (err: any, defaultMsg: string): string => {
         if (err.response?.data?.detail) {
             const detail = err.response.data.detail;
-            //(Array of objects)
             if (Array.isArray(detail)) {
                 return detail.map(d => `${d.loc[d.loc.length - 1]}: ${d.msg}`).join(' | ');
             }
-            // standard string error
             if (typeof detail === 'string') {
                 return detail;
             }
@@ -29,12 +27,13 @@ export const useSubmission = () => {
     };
 
     // Upload the file to trigger OCR
-    const uploadSubmission = async (file: File) => {
+    const uploadSubmission = async (file: File, engine: string) => {
         setStatus("uploading");
         setError(null);
         try {
             const formData = new FormData();
             formData.append("file", file);
+            formData.append("engine", engine);
 
             const response = await api.post<UploadResponse>("/student/upload", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
