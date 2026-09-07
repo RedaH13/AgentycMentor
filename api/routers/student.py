@@ -141,3 +141,66 @@ async def get_my_reports(user: dict = Depends(get_current_student)):
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch reports: {str(e)}")
+    
+@router.get("/reports/{session_id}")
+async def get_report_details(session_id: str, user: dict = Depends(get_current_student)):
+    """Fetches the full, detailed feedback report for a specific approved submission."""
+    user_id = user["user_id"]
+    
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT StudentID FROM Students WHERE UserID = ?", (user_id,))
+            student_row = cursor.fetchone()
+            if not student_row:
+                raise HTTPException(status_code=404, detail="Student profile not found.")
+            student_id = student_row[0]
+
+            
+            query = """
+                SELECT 
+                    s.Subject_Submission, s.DocumentType, s.SubmissionDate, s.SubmissionText, s.Langue,
+                    cr.TotalScore, cr.Passed, cr.GradedAt,
+                    fr.StudentDraftReport, fr.ApprovalStatus
+                FROM Submissions s
+                LEFT JOIN CorrectionResults cr ON s.SessionID = cr.SessionID
+                LEFT JOIN FeedbackReports fr ON s.SessionID = fr.SessionID
+                WHERE s.SessionID = ? AND s.StudentID = ?
+            """
+            cursor.execute(query, (session_id, student_id))
+            report_row = cursor.fetchone()
+
+            if not report_row:
+                raise HTTPException(status_code=404, detail="Report not found or you do not have access.")
+                
+            if getattr(report_row, "ApprovalStatus", None) != 'Approved':
+                raise HTTPException(status_code=403, detail="This report is still pending professor approval.")
+
+            # Fetch Phase Evaluations
+            cursor.execute("SELECT PhaseName, Score, Justification FROM PhaseEvaluations WHERE SessionID = ?", (session_id,))
+            phases = [{"phase_name": p.PhaseName, "score": p.Score, "justification": p.Justification} for p in cursor.fetchall()]
+
+            # Fetch Critical Errors
+            cursor.execute("SELECT ErrorText FROM CorrectionErrors WHERE SessionID = ?", (session_id,))
+            errors = [e.ErrorText for e in cursor.fetchall()]
+
+            return {
+                "session_id": session_id,
+                "subject_submission": getattr(report_row, "Subject_Submission", "Unknown"),
+                "document_type": getattr(report_row, "DocumentType", "Assignment"),
+                "submission_date": getattr(report_row, "SubmissionDate", None),
+                "submission_text": getattr(report_row, "SubmissionText", ""),
+                "langue": getattr(report_row, "Langue", "Unknown"),
+                "total_score": getattr(report_row, "TotalScore", 0),
+                "passed": getattr(report_row, "Passed", False),
+                "graded_at": getattr(report_row, "GradedAt", None),
+                "student_feedback": getattr(report_row, "StudentDraftReport", ""), # Mapped for frontend
+                "phase_evaluations": phases,
+                "critical_errors": errors
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch report details: {str(e)}")

@@ -10,13 +10,14 @@ import VerificationSection from "@/components/dashboard/student/VerificationSect
 import SubmissionStatus from "@/components/dashboard/student/SubmissionStatus";
 import { useSubmission } from "@/hooks/useSubmission";
 import ReportsList from "@/components/dashboard/student/ReportsList";
+import ReportDetailView from "@/components/dashboard/student/ReportDetailView";
 
 export default function StudentDashboard() {
     const { logout, fullName } = useAuth();
     const { status, sessionId, extractedText, langue, error, uploadSubmission, verifyText, reset } = useSubmission();
 
     const [activeTab, setActiveTab] = useState<"new" | "reports">("new");
-
+    const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             uploadSubmission(e.target.files[0]);
@@ -87,9 +88,16 @@ export default function StudentDashboard() {
 
                     {/* Content Rendering based on Tab */}
                     {activeTab === "reports" ? (
-                        <ReportsList />
+                        selectedReportId ? (
+                            <ReportDetailView
+                                sessionId={selectedReportId}
+                                onBack={() => setSelectedReportId(null)}
+                            />
+                        ) : (
+                            <ReportsList onViewReport={setSelectedReportId} />
+                        )
                     ) : (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
+                        < div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
                             {error && (
                                 <div className="mb-6 p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
                                     {error}
@@ -121,7 +129,7 @@ export default function StudentDashboard() {
                         </div>
                     )}
                 </main>
-            </div>
-        </ProtectedRoute>
+            </div >
+        </ProtectedRoute >
     );
 }

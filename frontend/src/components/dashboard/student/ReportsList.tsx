@@ -3,7 +3,7 @@
 import { FileText, Clock, CheckCircle, XCircle, ChevronRight, FileSearch } from "lucide-react";
 import { useMyReports } from "@/hooks/useMyReports";
 
-export default function ReportsList() {
+export default function ReportsList({ onViewReport }: { onViewReport: (id: string) => void }) {
     const { reports, isLoading, error } = useMyReports();
 
     if (isLoading) {
@@ -105,6 +105,7 @@ export default function ReportsList() {
                                     <td className="px-6 py-4 text-right">
                                         <button
                                             disabled={isPending}
+                                            onClick={() => onViewReport(report.SessionID)}
                                             className={`inline-flex items-center gap-1 text-sm font-medium transition-colors ${isPending
                                                 ? 'text-gray-300 cursor-not-allowed'
                                                 : 'text-blue-600 hover:text-blue-700'

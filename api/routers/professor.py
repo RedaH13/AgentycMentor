@@ -30,6 +30,23 @@ class PendingReport(BaseModel):
 class ProfessorResponse(BaseModel):
     message: str
 
+
+class PhaseMetric(BaseModel):
+    phase_name: str
+    average_score: float
+
+class ErrorMetric(BaseModel):
+    error_text: str
+    occurrence_count: int
+
+class ClassMetricsResponse(BaseModel):
+    total_submissions: int
+    average_score: float
+    pass_rate: float
+    phase_averages: List[PhaseMetric]
+    top_errors: List[ErrorMetric]
+
+
 @router.get("/reports/pending", response_model= List[PendingReport])
 async def get_pending_reports(user: dict = Depends(get_current_professor)):
     """Fetches all reports waiting for professor approval from SQL Server."""
@@ -142,3 +159,129 @@ async def revise_and_approve_report(session_id: str, request: ReviseReportReques
         return ProfessorResponse(message=f"Report for session {session_id} successfully revised and approved.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database update error: {str(e)}")
+    
+
+@router.get("/reports/past", response_model=List[PendingReport])
+async def get_past_reports(user: dict = Depends(get_current_professor)):
+    """Fetches all previously approved reports corrected by this professor."""
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT 
+                    fr.SessionID, 
+                    fr.ProfessorSummary, 
+                    fr.PedagogicalWarning, 
+                    fr.StudentDraftReport, 
+                    fr.GeneratedAt, 
+                    sb.Langue, 
+                    st.UserIdentifier as student_name, 
+                    sb.DocumentType as document_type, 
+                    sb.Subject_Submission as subject_submission
+                FROM FeedbackReports fr 
+                JOIN Submissions sb ON fr.SessionID = sb.SessionID 
+                JOIN Students st ON st.StudentID = sb.StudentID
+                WHERE fr.ApprovalStatus = 'Approved' AND fr.CorrectedBy = ?
+                ORDER BY fr.ApprovedAt DESC;
+            """
+            cursor.execute(query, (user["user_id"],))
+            rows = cursor.fetchall()
+            
+            reports = []
+            for row in rows:
+                cursor.execute("SELECT PhaseName, Score, Justification FROM PhaseEvaluations WHERE SessionID = ?", (row.SessionID,))
+                phases = [{"phase_name": p.PhaseName, "score": p.Score, "justification": p.Justification} for p in cursor.fetchall()]
+                
+                cursor.execute("SELECT ErrorText FROM CorrectionErrors WHERE SessionID = ?", (row.SessionID,))
+                errors = [e.ErrorText for e in cursor.fetchall()]
+
+                reports.append(
+                    PendingReport(
+                        session_id=row.SessionID,
+                        professor_summary=row.ProfessorSummary,
+                        pedagogical_warning=row.PedagogicalWarning,
+                        student_draft_report=row.StudentDraftReport,
+                        generated_at=str(getattr(row, "GeneratedAt", None)) if getattr(row, "GeneratedAt", None) else None,
+                        langue=getattr(row, "Langue", None),
+                        student_name=getattr(row, "student_name", "Unknown Student"),
+                        document_type=getattr(row, "document_type", "Assignment"),
+                        subject_submission=getattr(row, "subject_submission", "Unknown Subject"),
+                        phase_evaluations=phases,
+                        critical_errors=errors
+                    )
+                )
+            return reports
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database read error: {str(e)}")
+    
+
+
+@router.get("/metrics/class", response_model=ClassMetricsResponse)
+async def get_class_metrics(user: dict = Depends(get_current_professor)):
+    """Aggregates class performance metrics from approved reports."""
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Overview
+            query_overview = """
+                SELECT 
+                    COUNT(cr.SessionID) as TotalSubmissions,
+                    AVG(CAST(cr.TotalScore AS FLOAT)) as AverageScore,
+                    SUM(CAST(cr.Passed AS INT)) as PassedCount
+                FROM CorrectionResults cr
+                JOIN FeedbackReports fr ON cr.SessionID = fr.SessionID
+                WHERE fr.ApprovalStatus = 'Approved'
+            """
+            cursor.execute(query_overview)
+            overview = cursor.fetchone()
+            
+            total_subs = overview.TotalSubmissions or 0
+            avg_score = round(overview.AverageScore, 1) if overview.AverageScore else 0.0
+            passed_count = overview.PassedCount or 0
+            pass_rate = round((passed_count / total_subs) * 100, 1) if total_subs > 0 else 0.0
+
+            # Phase Averages
+            query_phases = """
+                SELECT 
+                    pe.PhaseName, 
+                    AVG(CAST(pe.Score AS FLOAT)) as AvgScore
+                FROM PhaseEvaluations pe
+                JOIN FeedbackReports fr ON pe.SessionID = fr.SessionID
+                WHERE fr.ApprovalStatus = 'Approved'
+                GROUP BY pe.PhaseName
+            """
+            cursor.execute(query_phases)
+            phase_averages = [
+                PhaseMetric(phase_name=row.PhaseName, average_score=round(row.AvgScore, 2))
+                for row in cursor.fetchall()
+            ]
+
+            # Top 5 critic Err
+            query_errors = """
+                SELECT TOP 5 
+                    ce.ErrorText, 
+                    COUNT(*) as OccurrenceCount
+                FROM CorrectionErrors ce
+                JOIN FeedbackReports fr ON ce.SessionID = fr.SessionID
+                WHERE fr.ApprovalStatus = 'Approved'
+                GROUP BY ce.ErrorText
+                ORDER BY OccurrenceCount DESC
+            """
+            cursor.execute(query_errors)
+            top_errors = [
+                ErrorMetric(error_text=row.ErrorText, occurrence_count=row.OccurrenceCount)
+                for row in cursor.fetchall()
+            ]
+
+            return ClassMetricsResponse(
+                total_submissions=total_subs,
+                average_score=avg_score,
+                pass_rate=pass_rate,
+                phase_averages=phase_averages,
+                top_errors=top_errors
+            )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database aggregation error: {str(e)}")
