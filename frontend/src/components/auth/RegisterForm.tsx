@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRegister } from '@/hooks/useRegister';
+import { User } from 'lucide-react';
 
 export default function RegisterForm() {
+    const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState<'student' | 'professor'>('student');
@@ -14,7 +16,7 @@ export default function RegisterForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await register(email, password, role, role === 'professor' ? inviteCode : undefined);
+        await register(fullName, email, password, role, inviteCode);
     };
 
     return (
@@ -71,7 +73,22 @@ export default function RegisterForm() {
                         </label>
                     </div>
                 </div>
-
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <User className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                            type="text"
+                            required
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-zinc-900 focus:border-zinc-900 sm:text-sm"
+                            placeholder=""
+                        />
+                    </div>
+                </div>
                 <div>
                     <label className="block text-sm font-serif font-medium text-zinc-700 mb-2">
                         Email

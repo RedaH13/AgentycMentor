@@ -8,14 +8,14 @@ export const useRegister = () => {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<boolean>(false);
 
-    const register = async (email: string, password: string, role: string, invite_code?: string) => {
+    const register = async (user_identifier: string, email: string, password: string, role: string, invite_code?: string) => {
         setIsLoading(true);
         setError(null);
         setSuccess(false);
 
         try {
             // Construct payload, only adding invite_code if it was provided
-            const payload: any = { email, password, role };
+            const payload: any = { user_identifier, email, password, role };
             if (invite_code) {
                 payload.invite_code = invite_code;
             }
