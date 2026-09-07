@@ -1,61 +1,49 @@
 "use client";
 
 import { useState } from "react";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
-
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import ProfessorHeader from "@/components/dashboard/professor/ProfessorHeader";
-import PendingSubmissionsTable, { PendingSubmission } from "@/components/dashboard/professor/PendingSubmissionsTable";
+import PendingReportsList from "@/components/dashboard/professor/PendingReportsList";
+import ReviewReportPanel from "@/components/dashboard/professor/ReviewReportPanel";
+import { PendingReport } from "@/hooks/usePendingReports";
 
 export default function ProfessorDashboard() {
     const { logout, fullName } = useAuth();
-
-    // Placeholder data - we will replace this with a usePendingReports hook next!
-    const [submissions, setSubmissions] = useState<PendingSubmission[]>([
-        { id: "d8a2-4f1c-b3a1", studentId: "MAS-2026", score: 12, maxScore: 15, warningFlag: null },
-        { id: "e7b9-9x2a-c4b2", studentId: "MAS-2027", score: 6, maxScore: 15, warningFlag: "Decomposition Error" },
-    ]);
-
-    const handleApprove = (id: string) => {
-        console.log("Approving session:", id);
-        // API call will go here
-    };
-
-    const handleRevise = (id: string) => {
-        console.log("Revising session:", id);
-        // Navigation or Modal logic will go here
-    };
+    // Track the currently selected report for review
+    const [selectedReport, setSelectedReport] = useState<PendingReport | null>(null);
 
     return (
         <ProtectedRoute allowedRoles={["professor", "admin"]}>
             <div className="min-h-screen bg-gray-50 flex flex-col">
-
                 <ProfessorHeader onLogout={logout} fullName={fullName} />
 
-                <main className="flex-grow p-8">
-                    <div className="max-w-6xl mx-auto space-y-6">
-
-                        <div className="flex justify-between items-end mb-6">
-                            <div>
-                                <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-                                    Pending Submissions
-                                </h1>
-                                <p className="text-sm text-gray-500">
-                                    Review, revise, and approve AI-generated evaluations.
-                                </p>
-                            </div>
-                            <div className="text-sm font-medium text-gray-500">
-                                <span className="text-gray-900 font-bold">{submissions.length}</span> awaiting review
-                            </div>
-                        </div>
-
-                        <PendingSubmissionsTable
-                            submissions={submissions}
-                            onApprove={handleApprove}
-                            onRevise={handleRevise}
-                        />
-
+                <main className="flex-1 w-full max-w-5xl mx-auto px-6 py-8">
+                    <div className="mb-8">
+                        <h1 className="text-2xl font-serif font-bold text-gray-900">
+                            Welcome back, {fullName?.split(' ')[0] || 'Professor'}
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">
+                            {selectedReport
+                                ? "Reviewing student submission and MAS feedback."
+                                : "Here is the latest automated grading from the MAS pipeline."}
+                        </p>
                     </div>
+
+                    {/* Conditional Rendering: Show panel if a report is selected, else show the list */}
+                    {selectedReport ? (
+                        <ReviewReportPanel
+                            report={selectedReport}
+                            onBack={() => setSelectedReport(null)}
+                            onSuccess={() => {
+                                setSelectedReport(null);
+                                // The list will automatically refetch when re-mounted, 
+                                // but you can also pass down a refetch trigger if needed.
+                            }}
+                        />
+                    ) : (
+                        <PendingReportsList onSelectReport={setSelectedReport} />
+                    )}
                 </main>
             </div>
         </ProtectedRoute>

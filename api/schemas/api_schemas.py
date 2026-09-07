@@ -4,8 +4,6 @@ from typing import Optional, List, Dict, Any
 # STUDENT SCHEMAS (Ingestion & Verification)
 class StartPipelineRequest(BaseModel):
     student_id: int = Field(..., description="The ID of the student submitting the work.")
-    # In a real frontend, the image would be sent as a multipart form data (UploadFile).
-    # We include file_path here to simulate the payload for now.
     file_path: Optional[str] = Field(None, description="Path to the local file for processing.")
 
 class VerifyTextRequest(BaseModel):

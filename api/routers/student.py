@@ -3,6 +3,7 @@ from fastapi import UploadFile, File, APIRouter, HTTPException, Depends
 from api.schemas.api_schemas import StartPipelineRequest, VerifyTextRequest, PipelineResponse
 from mas_orchestrator.graphs.router_graph import mas_router
 from api.dependencies import get_current_student
+from shared.utils.db_utils import get_db_connection
 
 router = APIRouter(prefix="/api/v1/student", tags=["Student Interface"])
 
@@ -93,3 +94,50 @@ async def verify_text(session_id: str, request: VerifyTextRequest, user: dict = 
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Pipeline resumption failed: {str(e)}")
+    
+
+@router.get("/reports")
+async def get_my_reports(user: dict = Depends(get_current_student)):
+    """Fetches all past submissions and their grading status for the logged-in student."""
+    user_id = user["user_id"]
+    
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT StudentID FROM Students WHERE UserID = ?", (user_id,))
+            student_row = cursor.fetchone()
+            
+            if not student_row:
+                return []
+                
+            student_id = student_row[0]
+            
+            # fetch the joined report data
+            query = """
+                SELECT 
+                    s.SessionID, 
+                    s.Subject_Submission, 
+                    s.DocumentType, 
+                    s.SubmissionDate,
+                    cr.TotalScore,
+                    cr.Passed,
+                    fr.ApprovalStatus
+                FROM Submissions s
+                LEFT JOIN CorrectionResults cr ON s.SessionID = cr.SessionID
+                LEFT JOIN FeedbackReports fr ON s.SessionID = fr.SessionID
+                WHERE s.StudentID = ?
+                ORDER BY s.SubmissionDate DESC
+            """
+            cursor.execute(query, (student_id,))
+            
+            # Convert pyodbc rows to dict
+            columns = [column[0] for column in cursor.description]
+            reports = []
+            for row in cursor.fetchall():
+                reports.append(dict(zip(columns, row)))
+                
+            return reports
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch reports: {str(e)}")

@@ -1,66 +1,50 @@
 "use client";
 
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubmission } from "@/hooks/useSubmission";
-import { AlertCircle, User, FileText, Settings, History } from "lucide-react";
+import { User, LogOut } from "lucide-react";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 import UploadSection from "@/components/dashboard/student/UploadSection";
 import VerificationSection from "@/components/dashboard/student/VerificationSection";
 import SubmissionStatus from "@/components/dashboard/student/SubmissionStatus";
+import { useSubmission } from "@/hooks/useSubmission";
+import ReportsList from "@/components/dashboard/student/ReportsList";
 
 export default function StudentDashboard() {
     const { logout, fullName } = useAuth();
-    const {
-        status,
-        error,
-        extractedText,
-        langue,
-        uploadSubmission,
-        verifyText,
-        reset,
-    } = useSubmission();
+    const { status, sessionId, extractedText, langue, error, uploadSubmission, verifyText, reset } = useSubmission();
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            await uploadSubmission(e.target.files[0]);
+    const [activeTab, setActiveTab] = useState<"new" | "reports">("new");
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            uploadSubmission(e.target.files[0]);
         }
     };
 
     return (
         <ProtectedRoute allowedRoles={["student"]}>
-            <div className="min-h-screen bg-zinc-50 flex flex-col antialiased selection:bg-zinc-200">
-
-                {/* Minimal Navigation */}
-                <nav className="w-full px-8 py-3 bg-white border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    {/* Left: Brand & Navigation Tabs */}
-                    <div className="flex items-center gap-8">
-                        <div className="font-bold text-gray-900 tracking-tight">AgentycMentor</div>
-                        <div className="hidden sm:flex items-center gap-2">
-                            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-900 bg-gray-100 rounded-md transition-colors">
-                                <FileText className="w-4 h-4" />
-                                New Submission
-                            </button>
-                            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors">
-                                <History className="w-4 h-4" />
-                                My Reports
-                            </button>
-                            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors">
-                                <Settings className="w-4 h-4" />
-                                Settings
-                            </button>
+            <div className="min-h-screen bg-gray-50 flex flex-col">
+                {/* Navbar */}
+                <nav className="w-full px-8 py-3 bg-white border-b border-gray-100 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-serif font-bold text-lg leading-none">AM</span>
                         </div>
+                        <span className="text-xl font-serif font-semibold text-zinc-900 tracking-tight">AgentycMentor</span>
                     </div>
 
-                    {/* Right: User Identity & Logout */}
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500">
                                 <User className="w-5 h-5" />
                             </div>
                             <div className="hidden md:block text-left">
-                                <p className="text-sm font-semibold text-gray-900 leading-tight">{fullName || 'Loading...'}</p>
-                                <p className="text-xs text-gray-500 font-mono">Student Space</p>
+                                <p className="text-sm font-semibold text-gray-900 leading-tight truncate max-w-[150px]">
+                                    {fullName || 'Loading...'}
+                                </p>
+                                <p className="text-xs text-gray-500 font-medium">Student Space</p>
                             </div>
                         </div>
 
@@ -68,43 +52,60 @@ export default function StudentDashboard() {
 
                         <button
                             onClick={logout}
-                            className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+                            className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2"
                         >
+                            <LogOut className="w-4 h-4" />
                             Sign Out
                         </button>
                     </div>
                 </nav>
 
-                {/* Main Content */}
-                <main className="flex-grow p-4 sm:p-8 flex flex-col items-center">
-                    <div className="max-w-3xl w-full mx-auto space-y-6 mt-4 sm:mt-8">
-                        <div className="bg-white border border-zinc-100 rounded-[2rem] shadow-sm p-8 sm:p-12">
+                {/* Main Content Area */}
+                <main className="flex-1 w-full max-w-5xl mx-auto px-6 py-8">
 
-                            {/* Header */}
-                            <div className="mb-10">
-                                <h1 className="text-3xl font-serif font-bold tracking-tight text-zinc-900 mb-3">
-                                    Submit Assignment
-                                </h1>
-                                <p className="text-base font-serif text-zinc-500 leading-relaxed">
-                                    Upload your work for AI grading. You will have a chance to
-                                    verify the extracted text before it is evaluated.
-                                </p>
-                            </div>
+                    {/* Tabs */}
+                    <div className="flex space-x-1 bg-gray-100/50 p-1 rounded-lg w-fit mb-8 border border-gray-200">
+                        <button
+                            onClick={() => setActiveTab("new")}
+                            className={`px-6 py-2 text-sm font-medium rounded-md transition-all ${activeTab === "new"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-500 hover:text-gray-700"
+                                }`}
+                        >
+                            New Submission
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("reports")}
+                            className={`px-6 py-2 text-sm font-medium rounded-md transition-all ${activeTab === "reports"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-500 hover:text-gray-700"
+                                }`}
+                        >
+                            My Reports
+                        </button>
+                    </div>
 
-                            {/* Error Alert */}
+                    {/* Content Rendering based on Tab */}
+                    {activeTab === "reports" ? (
+                        <ReportsList />
+                    ) : (
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
                             {error && (
-                                <div className="mb-8 p-4 flex gap-3 items-center text-sm font-sans text-red-800 bg-red-50/50 border border-red-100 rounded-2xl">
-                                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-                                    <p>{error}</p>
+                                <div className="mb-6 p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                                    {error}
                                 </div>
                             )}
 
-                            {/* Dynamic Sections based on Status */}
-                            {(status === "idle" || status === "uploading") && (
-                                <UploadSection status={status} onFileSelect={handleFileChange} />
+                            {/* Upload Section (idle or uploading) */}
+                            {(status === 'idle' || status === 'uploading') && (
+                                <UploadSection
+                                    status={status}
+                                    onFileSelect={handleFileSelect}
+                                />
                             )}
 
-                            {status === "verifying" && (
+                            {/* Verification Section */}
+                            {status === 'verifying' && (
                                 <VerificationSection
                                     initialText={extractedText}
                                     initialLangue={langue}
@@ -113,11 +114,12 @@ export default function StudentDashboard() {
                                 />
                             )}
 
-                            {(status === "submitting" || status === "done") && (
+                            {/* Submission Status Section */}
+                            {(status === 'submitting' || status === 'done') && (
                                 <SubmissionStatus status={status} onReset={reset} />
                             )}
                         </div>
-                    </div>
+                    )}
                 </main>
             </div>
         </ProtectedRoute>
