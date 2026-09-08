@@ -1,9 +1,14 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from typing import Dict, Any, List
 from pydantic import BaseModel, Field
 from typing import Optional
 from api.schemas.api_schemas import ReviseReportRequest
 from datetime import datetime
+import tempfile
+import os
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from rag_service.vectorstore.qdrant_client import get_qdrant_vector_store
 from shared.utils.db_utils import get_db_connection
 from api.dependencies import get_current_professor
 
@@ -285,3 +290,49 @@ async def get_class_metrics(user: dict = Depends(get_current_professor)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database aggregation error: {str(e)}")
+    
+
+@router.post("/knowledge/upload", response_model=ProfessorResponse)
+async def upload_course_material(
+    file: UploadFile = File(...), 
+    user: dict = Depends(get_current_professor)
+):
+    """Uploads a PDF, chunks it, and ingests it into Qdrant for RAG."""
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are currently supported for the Knowledge Base.")
+
+    # Save uploaded file temporarily for LangChain's PDF loader
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+        temp_file.write(await file.read())
+        temp_path = temp_file.name
+
+    try:
+        # 1. Load the PDF
+        loader = PyPDFLoader(temp_path)
+        documents = loader.load()
+        
+        # 2. Add metadata (so we know who uploaded it and what it is)
+        for doc in documents:
+            doc.metadata["professor_id"] = user["user_id"]
+            doc.metadata["source_file"] = file.filename
+
+        # 3. Chunk the text
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=150,
+            separators=["\n\n", "\n", ".", " ", ""]
+        )
+        chunks = text_splitter.split_documents(documents)
+
+        # 4. Push to Qdrant
+        vector_store = get_qdrant_vector_store()
+        vector_store.add_documents(chunks)
+
+        return ProfessorResponse(message=f"Successfully ingested '{file.filename}' into the Knowledge Base. ({len(chunks)} vectors created)")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Knowledge Base ingestion failed: {str(e)}")
+    finally:
+        # Clean up the temp file
+        if os.path.exists(temp_path):
+            os.remove(temp_path)

@@ -50,7 +50,8 @@ def run_correction_node(state: MASState) -> dict:
         
         formatted_prompt = CORRECTION_SYSTEM_PROMPT.format(
             subject=subject,
-            reference_materials=retrieved_context,
+            reference_materials="Official Course Materials", 
+            retrieved_context=retrieved_context,
             student_text=text_to_analyze,
             langue=langue
         )
@@ -60,8 +61,7 @@ def run_correction_node(state: MASState) -> dict:
             return {"error": "Correction Agent failed: Missing academic evaluations."}
 
         if session_id:
-            self_reported_gaps = []            
-            # Extract insights only from the Reflective Phases (Phases 6 and 7)
+            self_reported_gaps = []
             for ref_phase in correction_data.get("reflective_evaluations", []):
                 if ref_phase.get("completed") and ref_phase.get("extracted_feedback"):
                     formatted_gap = f"Self-Reported ({ref_phase['phase_name']}): {ref_phase['extracted_feedback']}"

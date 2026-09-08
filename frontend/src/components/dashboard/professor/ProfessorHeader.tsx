@@ -1,8 +1,8 @@
 "use client";
 
-import { User, Inbox, BarChart2, Settings, FileCheck } from "lucide-react";
+import { User, Inbox, BarChart2, Settings, FileCheck, Database } from "lucide-react";
 
-export type ProfessorTab = "pending" | "past" | "metrics" | "settings";
+export type ProfessorTab = "pending" | "past" | "metrics" | "knowledge" | "settings";
 
 interface ProfessorHeaderProps {
     onLogout: () => void;
@@ -48,8 +48,13 @@ export default function ProfessorHeader({ onLogout, fullName, activeTab, onTabCh
                         <BarChart2 className="w-4 h-4" />
                         Class Metrics
                     </button>
-
-
+                    <button
+                        onClick={() => onTabChange("knowledge")}
+                        className={getTabClass("knowledge")}
+                    >
+                        <Database className="w-4 h-4" />
+                        Knowledge Base
+                    </button>
                 </div>
             </div>
 

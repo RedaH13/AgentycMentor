@@ -9,6 +9,7 @@ import PastReportsList from "@/components/dashboard/professor/PastReportsList";
 import ReviewReportPanel from "@/components/dashboard/professor/ReviewReportPanel";
 import { PendingReport } from "@/hooks/usePendingReports";
 import ClassMetricsPanel from "@/components/dashboard/professor/ClassMetricsPanel";
+import KnowledgeBasePanel from "@/components/dashboard/professor/KnowledgeBasePanel";
 
 export default function ProfessorDashboard() {
     const { logout, fullName } = useAuth();
@@ -40,7 +41,9 @@ export default function ProfessorDashboard() {
                                 ? "Reviewing student submission and MAS feedback."
                                 : activeTab === "past"
                                     ? "Viewing previously approved reports."
-                                    : "Here is the latest automated grading from the MAS pipeline."}
+                                    : activeTab === "knowledge"
+                                        ? "Manage course materials for the AI to reference during grading."
+                                        : "Here is the latest automated grading from the MAS pipeline."}
                         </p>
                     </div>
 
@@ -56,6 +59,7 @@ export default function ProfessorDashboard() {
                             {activeTab === "pending" && <PendingReportsList onSelectReport={setSelectedReport} />}
                             {activeTab === "past" && <PastReportsList onSelectReport={setSelectedReport} />}
                             {activeTab === "metrics" && <ClassMetricsPanel />}
+                            {activeTab === "knowledge" && <KnowledgeBasePanel />}
                         </>
                     )}
                 </main>

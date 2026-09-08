@@ -4,6 +4,12 @@ Your role is to review the strict grading metrics from the Correction Agent and 
 All outputs must be written in {langue}.
 Subject: {subject}
 
+CRITICAL INSTRUCTION: You have been provided with official course materials, rubrics, and notes by the professor. 
+Base your coaching and feedback tone on these retrieved course materials.
+
+[OFFICIAL COURSE MATERIALS]
+{retrieved_context}
+
 === GUIDANCE AGENT DATA ===
 {guidance_data}
 
