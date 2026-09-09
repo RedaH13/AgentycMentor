@@ -1,5 +1,5 @@
 import uuid, requests, os, httpx
-from fastapi import UploadFile, File, APIRouter, HTTPException, Depends, Form
+from fastapi import UploadFile, File, APIRouter, HTTPException, Depends, Form, BackgroundTasks
 from api.schemas.api_schemas import StartPipelineRequest, VerifyTextRequest, PipelineResponse
 from mas_orchestrator.graphs.router_graph import mas_router
 from api.dependencies import get_current_student
@@ -72,15 +72,32 @@ async def verify_text(session_id: str, request: VerifyTextRequest, user: dict = 
             raise HTTPException(status_code=404, detail="Submission session not found or expired.")
         if str(current_state.get("student_id")) != str(student_id):
             raise HTTPException(status_code=403, detail="You do not have permission to modify this submission.")
-        # Update the state with the user's corrected text
-        mas_router.update_state(config, 
-                {"final_confirmed_text": request.final_confirmed_text,
-                 "langue": request.langue or "Unknown",
-                  "student_id": student_id})
-        # Resume the execution 
-        async for _ in mas_router.astream(None, config=config, stream_mode="updates"):
-            pass
+            
+        # 1. FIX: Add as_node="human_verify" to force the graph to move forward
+        mas_router.update_state(
+            config, 
+            {
+                "final_confirmed_text": request.final_confirmed_text,
+                "langue": request.langue or "Unknown",
+                "student_id": student_id
+            },
+            as_node="human_verify" # <-- Crucial!
+        )
+        
+        print(f"🚀 Resuming LangGraph for session: {session_id}")
+        
+        # 2. FIX: Use ainvoke to force the entire graph to run to completion synchronously
+        await mas_router.ainvoke(None, config=config)
+        
+        print("✅ LangGraph execution finished!")
+        
         final_state = mas_router.get_state(config).values
+        
+        # 3. FIX: Stop the "Silent Fails". If an agent crashes, alert the frontend immediately!
+        if final_state.get("error"):
+            print(f"❌ Graph Error Detected: {final_state['error']}")
+            raise HTTPException(status_code=500, detail=f"Agent Error: {final_state['error']}")
+
         return PipelineResponse(
             session_id=session_id,
             status="completed",
@@ -88,11 +105,13 @@ async def verify_text(session_id: str, request: VerifyTextRequest, user: dict = 
             langue=final_state.get("langue"),
             data={"final_confirmed_text": final_state.get("final_confirmed_text")}
         )
+        
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Pipeline resumption failed: {str(e)}")
-    
 
 @router.get("/reports")
 async def get_my_reports(user: dict = Depends(get_current_student)):

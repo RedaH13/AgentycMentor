@@ -1,7 +1,7 @@
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-def get_gemini_client(temperature: float = 0.2, model: str = "gemini-2.5-flash"):
+def get_gemini_client(temperature: float = 0.2, model: str = "gemini-3.5-flash-lite"):
     """
     Returns a configured native Gemini client for LangGraph nodes.
     """
@@ -12,5 +12,6 @@ def get_gemini_client(temperature: float = 0.2, model: str = "gemini-2.5-flash")
     return ChatGoogleGenerativeAI(
         model=model,
         temperature=temperature,
-        api_key=api_key
+        api_key=api_key,
+        max_retries=3
     )

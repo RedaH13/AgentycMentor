@@ -50,7 +50,8 @@ workflow.add_conditional_edges(
     route_after_diagnostic,
     {
         "human_verify": "human_verify",
-        "rag_retrieve": "rag_retrieve"
+        "rag_retrieve": "rag_retrieve",
+        END: END
     }
 )
 workflow.add_edge("rag_retrieve","guidance")
