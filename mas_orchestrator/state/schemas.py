@@ -25,3 +25,5 @@ class MASState(TypedDict):
     final_response: Optional[str]
     error: Optional[str]
     metadata: Optional[Dict[str, Any]]
+
+    timing_metrics: Dict[str, float]

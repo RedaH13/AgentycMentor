@@ -3,6 +3,7 @@ from typing import Literal
 from langchain_core.messages import HumanMessage
 from mas_orchestrator.state.schemas import MASState
 from llm_clients.gemini_client import get_gemini_client
+from mas_orchestrator.utils.telemetry import record_node_timing
 from llm_clients.prompts.diagnostic_prompts import DIAGNOSTIC_SYSTEM_PROMPT
 from dotenv import load_dotenv
 
@@ -29,6 +30,7 @@ class DiagnosticOutput(BaseModel):
         description="True if the document contains equations or formulas needing specialized evaluation"
     )
 
+@record_node_timing("diagnostic")
 def run_diagnostic_node(state: MASState) -> dict:
     """Analyzes the confirmed text to determine document structure and routing metadata"""
     text_to_analyze = state.get("final_confirmed_text")

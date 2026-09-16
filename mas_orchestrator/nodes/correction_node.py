@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List
 from langchain_core.messages import HumanMessage
+from mas_orchestrator.utils.telemetry import record_node_timing
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -30,6 +31,7 @@ class CorrectionOutput(BaseModel):
     total_score: int = Field(description="The sum of all phase scores (maximum 15).")
     critical_errors: List[str] = Field(description="Direct, objective mistakes made in Phases 1-5.")
 
+@record_node_timing("correction")
 def run_correction_node(state: MASState) -> dict:
     """Evaluates the student's work strictly against the C2PCT rubric."""
     text_to_analyze = state.get("final_confirmed_text")

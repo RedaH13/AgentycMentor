@@ -73,7 +73,7 @@ async def verify_text(session_id: str, request: VerifyTextRequest, user: dict = 
         if str(current_state.get("student_id")) != str(student_id):
             raise HTTPException(status_code=403, detail="You do not have permission to modify this submission.")
             
-        # 1. FIX: Add as_node="human_verify" to force the graph to move forward
+        # Add as_node="human_verify" to force the graph to move forward
         mas_router.update_state(
             config, 
             {
@@ -81,21 +81,33 @@ async def verify_text(session_id: str, request: VerifyTextRequest, user: dict = 
                 "langue": request.langue or "Unknown",
                 "student_id": student_id
             },
-            as_node="human_verify" # <-- Crucial!
+            as_node="human_verify" 
         )
         
-        print(f"🚀 Resuming LangGraph for session: {session_id}")
+        print(f"Resuming LangGraph for session: {session_id}")
         
-        # 2. FIX: Use ainvoke to force the entire graph to run to completion synchronously
+        # Use ainvoke to force the entire graph to run to completion synchronously
         await mas_router.ainvoke(None, config=config)
         
-        print("✅ LangGraph execution finished!")
-        
         final_state = mas_router.get_state(config).values
+
+        timing_metrics = final_state.get("timing_metrics", {})
+        if timing_metrics:
+            import json, os
+            os.makedirs("analytics/outputs/benchmarks", exist_ok=True)
+            log_file = f"analytics/outputs/benchmarks/{session_id}.json"
+            with open(log_file, "w", encoding="utf-8") as f:
+                json.dump({
+                    "session_id": session_id,
+                    "student_id": student_id,
+                    "timings": timing_metrics
+                }, f, indent=2)
+            print(f"Telemetry captured: {timing_metrics}")
+        print("LangGraph execution finished")
         
-        # 3. FIX: Stop the "Silent Fails". If an agent crashes, alert the frontend immediately!
+        # If an agent crashes, alert the frontend
         if final_state.get("error"):
-            print(f"❌ Graph Error Detected: {final_state['error']}")
+            print(f"Graph Error Detected: {final_state['error']}")
             raise HTTPException(status_code=500, detail=f"Agent Error: {final_state['error']}")
 
         return PipelineResponse(

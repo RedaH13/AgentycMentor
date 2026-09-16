@@ -5,6 +5,7 @@ from langchain_core.messages import HumanMessage
 from mas_orchestrator.state.schemas import MASState
 from llm_clients.gemini_client import get_gemini_client
 from llm_clients.prompts.feedback_prompts import FEEDBACK_SYSTEM_PROMPT
+from mas_orchestrator.utils.telemetry import record_node_timing
 from shared.utils.db_utils import save_feedback_report
 
 class FeedbackOutput(BaseModel):
@@ -18,6 +19,7 @@ class FeedbackOutput(BaseModel):
         description="An empathetic, constructive feedback report addressed to the student, focusing on actionable steps. Do not include raw numerical grades."
     )
 
+@record_node_timing("feedback")
 def run_feedback_node(state: MASState) -> dict:
     """Synthesizes technical grades and guidance into a student-friendly report."""
     

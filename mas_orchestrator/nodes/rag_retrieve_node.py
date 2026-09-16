@@ -1,6 +1,8 @@
 from mas_orchestrator.state.schemas import MASState
 from rag_service.vectorstore.qdrant_client import get_qdrant_vector_store
+from mas_orchestrator.utils.telemetry import record_node_timing
 
+@record_node_timing("rag_retrieve")
 def run_rag_retrieve_node(state: MASState) -> dict:
     """Queries Qdrant for course materials matching the student's submission."""
     text_to_analyze = state.get("final_confirmed_text", "")

@@ -7,6 +7,7 @@ load_dotenv()
 
 from mas_orchestrator.state.schemas import MASState
 from llm_clients.gemini_client import get_gemini_client
+from mas_orchestrator.utils.telemetry import record_node_timing
 from llm_clients.prompts.guidance_prompts import GUIDANCE_SYSTEM_PROMPT
 from shared.utils.db_utils import fetch_active_difficulties, save_new_difficulties, ensure_submission_exists
 
@@ -17,6 +18,7 @@ class GuidanceOutput(BaseModel):
     identified_difficulties: List[str] = Field(description="A list of specific difficulties or knowledge gaps detected in the student's work.")
     encouragement: str = Field(description="A short, encouraging closing sentence.")
 
+@record_node_timing("guidance")
 def run_guidance_node(state: MASState) -> dict:
     """Generates pedagogical feedback and automates progress tracking."""
     

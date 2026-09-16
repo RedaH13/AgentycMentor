@@ -2,7 +2,10 @@ import requests
 import os
 import httpx
 from mas_orchestrator.state.schemas import MASState
+from mas_orchestrator.utils.telemetry import record_node_timing
 
+
+@record_node_timing("ocr")
 async def run_ocr_node(state: MASState) -> dict:
     """Delegates perception to the independent ocr_service without deadlocking FastAPI."""
     file_path = state.get("file_path")

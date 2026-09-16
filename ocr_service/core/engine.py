@@ -54,8 +54,11 @@ def parse_ocrspace_to_schema(raw_json: dict) -> list:
         for line_data in overlay.get("Lines", []):
             words = []
             for w_data in line_data.get("Words", []):
+                # Try to grab WordConfidence if the OCR.Space engine provides it
+                conf = w_data.get("WordConfidence") 
                 words.append(WordBlock(
                     text=w_data.get("WordText", ""),
+                    confidence=float(conf) if conf is not None else None,
                     box=BoundingBox(
                         x=w_data.get("Left", 0),
                         y=w_data.get("Top", 0),
@@ -117,7 +120,7 @@ def parse_tesseract_to_schema(ocr_data: dict) -> list:
 def process_image(file_bytes: bytes, filename: str = "unknown", ocr_engine: str = "auto"):
     """
     Extracts text from student submissions (images). ocr_engine options: 
-      - "auto": Tesseract first, fallback to Gemini if confidence < 70
+      - "auto": Tesseract first, fallback to Gemini if confidence < 50
       - "tesseract": Forces local OCR only
       - "gemini": Forces Gemini API only
       - "ocrspace": Forces OCR.Space API only
@@ -191,30 +194,35 @@ def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace")
             raise ValueError(f"OCR.Space rejected the file: {error_msg}")
             
         pages = parse_ocrspace_to_schema(result_json)
-        
         parsed_results = result_json.get("ParsedResults") or [{}]
         full_text = parsed_results[0].get("ParsedText", "") if parsed_results else ""
+
+        # Calculate Global Confidence dynamically
+        all_confs = [w.confidence for p in pages for l in p.lines for w in l.words if w.confidence is not None]
+        global_confidence = round(sum(all_confs) / len(all_confs), 2) if all_confs else 100.0
 
         return OCRDatabaseRecord(
             file_name=filename,
             is_image=True,
             source_engine="ocrspace",
-            global_confidence=100.0,
+            global_confidence=global_confidence,
             full_text=clean_text(full_text),
             pages=pages
         )
 
     elif provider == "gemini":
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        
+        # INJECT CONFIDENCE REQUIREMENT INTO PROMPT
         prompt = """
         Extract all text and mathematical formulas from this image. 
         Return a JSON object with a single key 'lines', containing an array of line objects. 
         Each line object must have 'line_text', 'ymin', 'xmin', 'ymax', 'xmax', and an array of 'words'. 
-        Each word object must have 'text', 'ymin', 'xmin', 'ymax', 'xmax'.
+        Each word object must have 'text', 'ymin', 'xmin', 'ymax', 'xmax', and an integer 'confidence' (from 0 to 100 representing how clearly readable the word is).
         """
         
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-3.5-flash-lite",
             contents=[
                 genai.types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
                 prompt
@@ -225,16 +233,23 @@ def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace")
         )
         pages = []
         full_text_parts = []
+        global_confidence = 100.0
         
         try:
             gemini_data = json.loads(response.text)
             page = PageBlock(lines=[])
+            all_confs = []
             
             for line_data in gemini_data.get("lines", []):
                 words = []
                 for w_data in line_data.get("words", []):
+                    conf = w_data.get("confidence")
+                    if conf is not None:
+                        all_confs.append(float(conf))
+                        
                     words.append(WordBlock(
                         text=w_data.get("text", ""),
+                        confidence=float(conf) if conf is not None else None,
                         box=BoundingBox(
                             x=float(w_data.get("xmin", 0)),
                             y=float(w_data.get("ymin", 0)),
@@ -259,6 +274,9 @@ def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace")
             pages = [page]
             full_text = "\n".join(full_text_parts)
             
+            if all_confs:
+                global_confidence = round(sum(all_confs) / len(all_confs), 2)
+            
         except (json.JSONDecodeError, TypeError, ValueError):
             full_text = response.text
             pages = []
@@ -267,7 +285,7 @@ def call_cloud_ocr(file_bytes: bytes, filename: str, provider: str = "ocrspace")
             file_name=filename,
             is_image=True,
             source_engine="gemini",
-            global_confidence=100.0,
+            global_confidence=global_confidence,
             full_text=clean_text(full_text),
             pages=pages
         )
