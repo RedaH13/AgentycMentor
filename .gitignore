@@ -1,3 +1,8 @@
 env/
 .env
 alembic.ini
+
+list_models.py
+test_flow.py
+test/
+analytics/outputs/
