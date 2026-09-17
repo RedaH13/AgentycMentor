@@ -47,7 +47,7 @@ Pedago-MAS/
 ## Installation & Setup
 ```bash
 # Clone the repository
-git clone https://github.com/RedaH13/pedago-mas.git
+git clone https://github.com/RedaH13/AgentycMentor.git
 cd Pedago-MAS
 
 python -m venv venv
