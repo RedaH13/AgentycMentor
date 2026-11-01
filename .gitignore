@@ -2,6 +2,8 @@ env/
 .env
 alembic.ini
 
+data/qdrant_storage
+
 list_models.py
 test_flow.py
 test/
