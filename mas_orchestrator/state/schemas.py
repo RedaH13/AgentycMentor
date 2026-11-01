@@ -1,4 +1,5 @@
-from typing import TypedDict, Dict, Any, Optional
+from typing import TypedDict, Dict, Any, Optional,Annotated
+from langgraph.graph.message import add_messages
 
 class MASState(TypedDict):
     """Global state shared across all LangGraph nodes."""
@@ -27,3 +28,10 @@ class MASState(TypedDict):
     metadata: Optional[Dict[str, Any]]
 
     timing_metrics: Dict[str, float]
+
+
+class ChatState(TypedDict):
+    """State strictly for the Conversational AI Tutor"""
+    messages: Annotated[list, add_messages]
+    student_id: str
+    student_report: str
