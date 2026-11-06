@@ -5,7 +5,7 @@ from llm_clients.prompts.chat_tutor_prompt import CHAT_TUTOR_SYSTEM_PROMPT
 from llm_clients.gemini_client import get_gemini_client
 
 # Init LLM using client factory
-llm = get_gemini_client(temperature=0.3, model="gemini-1.5-flash")
+llm = get_gemini_client(temperature=0.3)
 llm_with_tools = llm.bind_tools(chat_tools)
 
 def run_chat_tutor_node(state: ChatState):

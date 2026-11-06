@@ -1,16 +1,23 @@
 import os
+import urllib.parse
+from sqlalchemy.engine import URL
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Example Format: "mssql+pyodbc://username:password@server/dbname?driver=ODBC+Driver+17+for+SQL+Server"
-SQLALCHEMY_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "mssql+pyodbc://@DESKTOP-CK7HVDE/MAS_Pedagogic?driver=ODBC+Driver+17+for+SQL+Server;Trusted_Connection=yes"
+connection_url = URL.create(
+    "mssql+pyodbc",
+    host="DESKTOP-CK7HVDE",
+    database="MAS_Pedagogic",
+    query={
+        "driver": "ODBC Driver 17 for SQL Server",
+        "Trusted_Connection": "yes"
+    }
 )
 
-
+# 2. Pass the safely constructed URL object directly to the engine
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
+    connection_url,
     fast_executemany=True,
     echo=False
 )
