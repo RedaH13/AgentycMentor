@@ -5,39 +5,41 @@ from sqlalchemy.orm import Session
 from langchain_core.messages import HumanMessage
 from api.schemas.chat_schemas import ChatRequest
 from mas_orchestrator.graphs.chat_graph import chat_router
+from api.dependencies import get_current_student
 
 from api.database import get_db
 
 router = APIRouter(prefix="/chat", tags=["Conversational Tutor"])
 
 @router.post("/invoke")
-async def invoke_chat_tutor(request: ChatRequest, db: Session = Depends(get_db)):
-    """
-    Standard REST endpoint to test the conversational agent.
-    Maintains memory across requests using thread_id
-    """
+async def invoke_chat_tutor(
+    request: ChatRequest, 
+    db: Session = Depends(get_db),
+    current_student: dict = Depends(get_current_student)
+):
     try:
-        # Config memory tracking for specific convers thread
-        config = {"configurable": {"thread_id": request.thread_id}}
-        
+        # Security Check: Ensure only 'student' role can access the tutor
+        config = {"configurable": {"thread_id": request.thread_id}}        
         report_str = "Aucun rapport d'évaluation disponible."
         
+        # Fetch real DB data if session_id is provided
         if request.session_id:
             raw_report_dict = fetch_student_report_context(request.session_id, db)
             if raw_report_dict:
                 report_str = json.dumps(raw_report_dict, ensure_ascii=False, indent=2)
-
-        # state payload
+                
+        # LangGraph State
         input_state = {
             "messages": [HumanMessage(content=request.message)],
-            "student_id": request.student_id,
+            "student_id": current_student.get("UserIdentifier", request.student_id), 
             "student_report": report_str
         }
-        # exec cyclic graph
+        
+        # Exec Graph
         result = chat_router.invoke(input_state, config=config)
         final_message_content = result["messages"][-1].content
         
-        # concatenate Gemini array -> 1 string
+        # formatting
         clean_text = ""
         if isinstance(final_message_content, list):
             for block in final_message_content:
@@ -45,7 +47,7 @@ async def invoke_chat_tutor(request: ChatRequest, db: Session = Depends(get_db))
                     clean_text += block.get("text", "")
         else:
             clean_text = final_message_content
-        
+            
         return {
             "thread_id": request.thread_id,
             "response": clean_text
@@ -53,7 +55,7 @@ async def invoke_chat_tutor(request: ChatRequest, db: Session = Depends(get_db))
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur d'orchestration: {str(e)}")
-    
+
 
 def fetch_student_report_context(session_id: str, db: Session) -> dict:
     """

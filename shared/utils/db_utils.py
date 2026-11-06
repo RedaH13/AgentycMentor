@@ -72,7 +72,7 @@ def ensure_student_exists(student_id: int):
             cursor.execute(query, (student_id, student_id, user_ident))
             conn.commit()
     except Exception as e:
-        print(f"❌ DB Ensure Student Error: {e}")
+        print(f"DB Ensure Student Error: {e}")
 
 def ensure_submission_exists(session_id: str, student_id: int, subject: str, document_type: str = "Assignment", submission_text: str = None, langue: str=None):
     """
@@ -189,3 +189,35 @@ def save_feedback_report(session_id: str, feedback_data: dict):
             
     except Exception as e:
         print(f"DB Error (Save Feedback Report): {e}")
+
+
+
+def log_chat_interaction(thread_id: str, session_id: str, student_id: int, user_message: str, ai_response: str):
+    """Ensures the ChatThread exists and logs both the student and AI messages"""
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Ensure ChatThread exists
+            thread_query = """
+                IF NOT EXISTS (SELECT 1 FROM ChatThread WHERE ThreadID = ?)
+                BEGIN
+                    INSERT INTO ChatThread (ThreadID, SessionID, StudentID, CreatedAt, LastUpdatedAt)
+                    VALUES (?, ?, ?, GETDATE(), GETDATE());
+                END
+            """
+            cursor.execute(thread_query, (thread_id, thread_id, session_id, student_id))
+            
+            # Insert Student Message
+            msg_query = """
+                INSERT INTO ChatMessage (ThreadID, SenderRole, MessageText, SentAt)
+                VALUES (?, ?, ?, GETDATE());
+            """
+            cursor.execute(msg_query, (thread_id, 'Student', user_message))
+            
+            # 3. Insert AI Message
+            cursor.execute(msg_query, (thread_id, 'AI', ai_response))
+            
+            conn.commit()
+    except Exception as e:
+        print(f"DB Write Error (Chat Logging): {e}")

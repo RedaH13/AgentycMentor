@@ -8,3 +8,5 @@ list_models.py
 test_flow.py
 test/
 analytics/outputs/
+
+diagram.drawio
