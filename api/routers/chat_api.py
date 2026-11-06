@@ -8,6 +8,7 @@ from mas_orchestrator.graphs.chat_graph import chat_router
 from api.dependencies import get_current_student
 
 from api.database import get_db
+from shared.utils.db_utils import log_chat_interaction
 
 router = APIRouter(prefix="/chat", tags=["Conversational Tutor"])
 
@@ -47,6 +48,19 @@ async def invoke_chat_tutor(
                     clean_text += block.get("text", "")
         else:
             clean_text = final_message_content
+        
+        try:
+            jwt_user_id = current_student.get("user_id")
+            if jwt_user_id:
+                log_chat_interaction(
+                    thread_id=request.thread_id,
+                    session_id=request.session_id,
+                    user_id=jwt_user_id,
+                    user_message=request.message,
+                    ai_response=clean_text
+                )
+        except Exception as log_err:
+            print(f"Failed to log chat to SQL Server: {log_err}")
             
         return {
             "thread_id": request.thread_id,

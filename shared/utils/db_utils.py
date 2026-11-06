@@ -192,31 +192,45 @@ def save_feedback_report(session_id: str, feedback_data: dict):
 
 
 
-def log_chat_interaction(thread_id: str, session_id: str, student_id: int, user_message: str, ai_response: str):
-    """Ensures the ChatThread exists and logs both the student and AI messages"""
+def log_chat_interaction(thread_id: str, session_id: str, user_id: int, user_message: str, ai_response: str):
+    """Ensures the ChatThread exists and logs both the student and AI messages."""
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
             
-            # Ensure ChatThread exists
+            cursor.execute("SELECT StudentID FROM Students WHERE UserID = ?", (user_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                print(f"DB Write Error: No student profile found for UserID {user_id}")
+                return
+                
+            true_student_id = row[0]
+            # ChatThread exists or update LastUpdatedAt
             thread_query = """
                 IF NOT EXISTS (SELECT 1 FROM ChatThread WHERE ThreadID = ?)
                 BEGIN
-                    INSERT INTO ChatThread (ThreadID, SessionID, StudentID, CreatedAt, LastUpdatedAt)
+                    INSERT INTO ChatThread (ThreadID, StudentID, SessionID, CreatedAt, LastUpdatedAt)
                     VALUES (?, ?, ?, GETDATE(), GETDATE());
                 END
+                ELSE
+                BEGIN
+                    UPDATE ChatThread 
+                    SET LastUpdatedAt = GETDATE() 
+                    WHERE ThreadID = ?;
+                END
             """
-            cursor.execute(thread_query, (thread_id, thread_id, session_id, student_id))
+            cursor.execute(thread_query, (thread_id, thread_id, true_student_id, session_id, thread_id))
             
-            # Insert Student Message
+            # Prepare msg Insert Query
             msg_query = """
-                INSERT INTO ChatMessage (ThreadID, SenderRole, MessageText, SentAt)
+                INSERT INTO ChatMessage (ThreadID, SenderRole, MessageContent, SentAt)
                 VALUES (?, ?, ?, GETDATE());
             """
-            cursor.execute(msg_query, (thread_id, 'Student', user_message))
             
-            # 3. Insert AI Message
-            cursor.execute(msg_query, (thread_id, 'AI', ai_response))
+            # Insert student & ai msg
+            cursor.execute(msg_query, (thread_id, 'student', user_message))
+            cursor.execute(msg_query, (thread_id, 'tutor_ai', ai_response))
             
             conn.commit()
     except Exception as e:
