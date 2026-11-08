@@ -11,6 +11,7 @@ import SubmissionStatus from "@/components/dashboard/student/SubmissionStatus";
 import { useSubmission } from "@/hooks/useSubmission";
 import ReportsList from "@/components/dashboard/student/ReportsList";
 import ReportDetailView from "@/components/dashboard/student/ReportDetailView";
+import ChatWidget from "@/components/dashboard/student/ChatWidget";
 
 export default function StudentDashboard() {
     const { logout, fullName } = useAuth();
@@ -46,6 +47,10 @@ export default function StudentDashboard() {
                                 </p>
                                 <p className="text-xs text-gray-500 font-medium">Student Space</p>
                             </div>
+                        </div>
+                        <div>
+                            {/* Vos autres composants du dashboard */}
+                            <ChatWidget /> {/* Sans prop = chat général */}
                         </div>
 
                         <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>

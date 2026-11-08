@@ -2,6 +2,7 @@
 
 import { useReportDetails } from "@/hooks/useReportDetails";
 import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, Target, MessageSquare, FileText } from "lucide-react";
+import ChatWidget from "./ChatWidget";
 
 interface ReportDetailViewProps {
     sessionId: string;
@@ -128,6 +129,7 @@ export default function ReportDetailView({ sessionId, onBack }: ReportDetailView
                     </details>
                 </div>
             </div>
+            <ChatWidget reportSessionId={report.session_id} />
         </div>
     );
 }
