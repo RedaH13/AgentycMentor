@@ -235,3 +235,48 @@ def log_chat_interaction(thread_id: str, session_id: str, user_id: int, user_mes
             conn.commit()
     except Exception as e:
         print(f"DB Write Error (Chat Logging): {e}")
+
+
+def get_student_threads(user_id: int):
+    """Récupère la liste des conversations d'un étudiant spécifique."""
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            # fetch StudentID -> UserID
+            cursor.execute("SELECT StudentID FROM Students WHERE UserID = ?", (user_id,))
+            row = cursor.fetchone()
+            if not row: 
+                return []
+            
+            true_student_id = row[0]
+            
+            query = """
+                SELECT CAST(ThreadID AS VARCHAR(36)) AS ThreadID, SessionID, CreatedAt, LastUpdatedAt
+                FROM ChatThread
+                WHERE StudentID = ?
+                ORDER BY LastUpdatedAt DESC
+            """
+            cursor.execute(query, (true_student_id,))
+            cols = [column[0] for column in cursor.description]
+            return [dict(zip(cols, row)) for row in cursor.fetchall()]
+    except Exception as e:
+        print(f"DB Read Error (Threads): {e}")
+        return []
+
+def get_thread_messages(thread_id: str):
+    """Récupère tous les messages d'une conversation spécifique."""
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            query = """
+                SELECT SenderRole, MessageContent, SentAt
+                FROM ChatMessage
+                WHERE CAST(ThreadID AS VARCHAR(36)) = ?
+                ORDER BY SentAt ASC
+            """
+            cursor.execute(query, (thread_id,))
+            cols = [column[0] for column in cursor.description]
+            return [dict(zip(cols, row)) for row in cursor.fetchall()]
+    except Exception as e:
+        print(f"DB Read Error (Messages): {e}")
+        return []
